@@ -1,43 +1,27 @@
-namespace IGTools
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace MaterialEditor
 {
-    public partial class LandingPage : Form
+    public partial class CreateMaterial : Form
     {
-        public LandingPage()
+        public CreateMaterial()
         {
             InitializeComponent();
         }
-
-
-        private void NewMaterial(object sender, EventArgs e)
-        {
-            //this.Close();
-            //(new MaterialEditor.Editor()).Show();
-
-            (new MaterialEditor.CreateMaterial()).Show();
-        }
-
-        private void OpenMaterial(object sender, EventArgs e)
-        {
-
-        }
-
 
         // Event Handlers for Title Bar Buttons
 
         private void CloseWindow(object sender, EventArgs e)
         {
             this.Close();
-            Application.Exit();
-        }
-
-        private void MaxWindow(object sender, EventArgs e)
-        {
-            this.WindowState = FormWindowState.Maximized;
-        }
-
-        private void MinWindow(object sender, EventArgs e)
-        {
-            this.WindowState = FormWindowState.Minimized;
         }
 
         public const int WM_NCLBUTTONDOWN = 0xA1;
@@ -58,5 +42,15 @@ namespace IGTools
                 SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
             }
         }
+
+        private void SetMaterialPath(object sender, EventArgs e)
+        {
+            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
+            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+            {
+                MaterialPathTextBox.Text = folderBrowserDialog.SelectedPath;
+            }
+        }
+
     }
 }

@@ -32,6 +32,8 @@
             button1 = new Button();
             button2 = new Button();
             panel1 = new Panel();
+            label1 = new Label();
+            Title = new Label();
             TitleBar = new Panel();
             Min = new Button();
             Max = new Button();
@@ -42,7 +44,7 @@
             // 
             // button1
             // 
-            button1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            button1.Anchor = AnchorStyles.None;
             button1.AutoSize = true;
             button1.BackColor = Color.FromArgb(40, 45, 50);
             button1.FlatAppearance.BorderSize = 0;
@@ -50,7 +52,7 @@
             button1.FlatStyle = FlatStyle.Flat;
             button1.Font = new Font("Ubuntu", 20F, FontStyle.Regular, GraphicsUnit.Point);
             button1.ForeColor = Color.FromArgb(235, 235, 250);
-            button1.Location = new Point(3, 653);
+            button1.Location = new Point(79, 430);
             button1.Margin = new Padding(3, 4, 3, 4);
             button1.Name = "button1";
             button1.Size = new Size(286, 93);
@@ -61,7 +63,7 @@
             // 
             // button2
             // 
-            button2.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            button2.Anchor = AnchorStyles.None;
             button2.AutoSize = true;
             button2.BackColor = Color.FromArgb(40, 45, 50);
             button2.FlatAppearance.BorderSize = 0;
@@ -69,7 +71,7 @@
             button2.FlatStyle = FlatStyle.Flat;
             button2.Font = new Font("Ubuntu", 19.8000011F, FontStyle.Regular, GraphicsUnit.Point);
             button2.ForeColor = Color.FromArgb(235, 235, 250);
-            button2.Location = new Point(687, 653);
+            button2.Location = new Point(609, 430);
             button2.Margin = new Padding(3, 4, 3, 4);
             button2.Name = "button2";
             button2.Size = new Size(286, 93);
@@ -82,18 +84,46 @@
             // 
             panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             panel1.BackColor = Color.FromArgb(30, 30, 30);
+            panel1.Controls.Add(label1);
+            panel1.Controls.Add(Title);
             panel1.Controls.Add(button1);
             panel1.Controls.Add(button2);
             panel1.ForeColor = Color.Black;
             panel1.Location = new Point(11, 55);
             panel1.Margin = new Padding(3, 4, 3, 4);
             panel1.Name = "panel1";
-            panel1.Size = new Size(976, 751);
+            panel1.Size = new Size(975, 610);
             panel1.TabIndex = 2;
+            // 
+            // label1
+            // 
+            label1.Anchor = AnchorStyles.None;
+            label1.AutoSize = true;
+            label1.Font = new Font("Ubuntu", 18F, FontStyle.Regular, GraphicsUnit.Point);
+            label1.ForeColor = Color.FromArgb(118, 178, 187);
+            label1.Location = new Point(424, 160);
+            label1.Name = "label1";
+            label1.Size = new Size(123, 35);
+            label1.TabIndex = 3;
+            label1.Text = "IG Tools";
+            label1.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // Title
+            // 
+            Title.Anchor = AnchorStyles.None;
+            Title.AutoSize = true;
+            Title.Font = new Font("Ubuntu", 40F, FontStyle.Regular, GraphicsUnit.Point);
+            Title.ForeColor = Color.FromArgb(235, 235, 250);
+            Title.Location = new Point(246, 40);
+            Title.Name = "Title";
+            Title.Size = new Size(490, 79);
+            Title.TabIndex = 2;
+            Title.Text = "Material Editor";
+            Title.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // TitleBar
             // 
-            TitleBar.BackColor = Color.Transparent;
+            TitleBar.BackColor = Color.FromArgb(35, 35, 35);
             TitleBar.Controls.Add(Min);
             TitleBar.Controls.Add(Max);
             TitleBar.Controls.Add(Close);
@@ -101,7 +131,7 @@
             TitleBar.Location = new Point(0, 0);
             TitleBar.Margin = new Padding(3, 4, 3, 4);
             TitleBar.Name = "TitleBar";
-            TitleBar.Size = new Size(1001, 47);
+            TitleBar.Size = new Size(1000, 47);
             TitleBar.TabIndex = 3;
             TitleBar.MouseDown += MoveWindow;
             // 
@@ -114,7 +144,7 @@
             Min.FlatStyle = FlatStyle.Flat;
             Min.ForeColor = Color.FromArgb(64, 64, 64);
             Min.Image = (Image)resources.GetObject("Min.Image");
-            Min.Location = new Point(794, 0);
+            Min.Location = new Point(793, 0);
             Min.Margin = new Padding(3, 4, 3, 4);
             Min.Name = "Min";
             Min.Size = new Size(69, 47);
@@ -131,7 +161,7 @@
             Max.FlatStyle = FlatStyle.Flat;
             Max.ForeColor = Color.FromArgb(64, 64, 64);
             Max.Image = (Image)resources.GetObject("Max.Image");
-            Max.Location = new Point(863, 0);
+            Max.Location = new Point(862, 0);
             Max.Margin = new Padding(3, 4, 3, 4);
             Max.Name = "Max";
             Max.Size = new Size(69, 47);
@@ -148,7 +178,7 @@
             Close.FlatStyle = FlatStyle.Flat;
             Close.ForeColor = Color.FromArgb(64, 64, 64);
             Close.Image = (Image)resources.GetObject("Close.Image");
-            Close.Location = new Point(932, 0);
+            Close.Location = new Point(931, 0);
             Close.Margin = new Padding(3, 4, 3, 4);
             Close.Name = "Close";
             Close.Size = new Size(69, 47);
@@ -161,11 +191,12 @@
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(40, 40, 40);
-            ClientSize = new Size(1001, 821);
+            ClientSize = new Size(1000, 680);
             Controls.Add(TitleBar);
             Controls.Add(panel1);
             ForeColor = Color.Transparent;
             FormBorderStyle = FormBorderStyle.None;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(3, 4, 3, 4);
             Name = "LandingPage";
             Text = "IGMaterialTool";
@@ -184,5 +215,7 @@
         private Button Close;
         private Button Max;
         private Button Min;
+        private Label Title;
+        private Label label1;
     }
 }

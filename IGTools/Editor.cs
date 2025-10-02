@@ -1,26 +1,21 @@
-namespace IGTools
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace MaterialEditor
 {
-    public partial class LandingPage : Form
+    public partial class Editor : Form
     {
-        public LandingPage()
+        public Editor()
         {
             InitializeComponent();
         }
-
-
-        private void NewMaterial(object sender, EventArgs e)
-        {
-            //this.Close();
-            //(new MaterialEditor.Editor()).Show();
-
-            (new MaterialEditor.CreateMaterial()).Show();
-        }
-
-        private void OpenMaterial(object sender, EventArgs e)
-        {
-
-        }
-
 
         // Event Handlers for Title Bar Buttons
 
