@@ -34,7 +34,9 @@
             Max = new Button();
             Close = new Button();
             panel1 = new Panel();
+            checkedListBox1 = new CheckedListBox();
             TitleBar.SuspendLayout();
+            panel1.SuspendLayout();
             SuspendLayout();
             // 
             // TitleBar
@@ -106,10 +108,22 @@
             // 
             panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             panel1.BackColor = Color.FromArgb(30, 30, 30);
+            panel1.Controls.Add(checkedListBox1);
             panel1.Location = new Point(12, 54);
             panel1.Name = "panel1";
             panel1.Size = new Size(976, 614);
             panel1.TabIndex = 5;
+            // 
+            // checkedListBox1
+            // 
+            checkedListBox1.BackColor = Color.FromArgb(40, 45, 50);
+            checkedListBox1.ForeColor = Color.FromArgb(235, 235, 250);
+            checkedListBox1.FormattingEnabled = true;
+            checkedListBox1.Items.AddRange(new object[] { "test", "test2", "test3" });
+            checkedListBox1.Location = new Point(88, 140);
+            checkedListBox1.Name = "checkedListBox1";
+            checkedListBox1.Size = new Size(359, 268);
+            checkedListBox1.TabIndex = 0;
             // 
             // Editor
             // 
@@ -125,6 +139,7 @@
             Name = "Editor";
             Text = "Editor";
             TitleBar.ResumeLayout(false);
+            panel1.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -135,5 +150,6 @@
         private Button Max;
         private Button Close;
         private Panel panel1;
+        private CheckedListBox checkedListBox1;
     }
 }

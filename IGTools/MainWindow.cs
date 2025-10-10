@@ -10,10 +10,7 @@ namespace IGTools
 
         private void NewMaterial(object sender, EventArgs e)
         {
-            //this.Close();
-            //(new MaterialEditor.Editor()).Show();
 
-            (new MaterialEditor.CreateMaterial()).Show();
         }
 
         private void OpenMaterial(object sender, EventArgs e)

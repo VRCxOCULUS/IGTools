@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CreateMaterial));
             TitleBar = new Panel();
             Close = new Button();
@@ -36,12 +35,9 @@
             MaterialPathTextBox = new Label();
             button1 = new Button();
             label1 = new Label();
-            openFileDialog1 = new OpenFileDialog();
-            contextMenuStrip1 = new ContextMenuStrip(components);
-            testToolStripMenuItem = new ToolStripMenuItem();
+            button2 = new Button();
             TitleBar.SuspendLayout();
             panel2.SuspendLayout();
-            contextMenuStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // TitleBar
@@ -93,7 +89,6 @@
             MaterialPathTextBox.Name = "MaterialPathTextBox";
             MaterialPathTextBox.Size = new Size(551, 23);
             MaterialPathTextBox.TabIndex = 2;
-            MaterialPathTextBox.Text = "test";
             MaterialPathTextBox.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // button1
@@ -127,22 +122,24 @@
             label1.Text = "Path: ";
             label1.TextAlign = ContentAlignment.MiddleLeft;
             // 
-            // openFileDialog1
+            // button2
             // 
-            openFileDialog1.FileName = "openFileDialog1";
-            // 
-            // contextMenuStrip1
-            // 
-            contextMenuStrip1.ImageScalingSize = new Size(20, 20);
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { testToolStripMenuItem });
-            contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(103, 28);
-            // 
-            // testToolStripMenuItem
-            // 
-            testToolStripMenuItem.Name = "testToolStripMenuItem";
-            testToolStripMenuItem.Size = new Size(102, 24);
-            testToolStripMenuItem.Text = "test";
+            button2.Anchor = AnchorStyles.None;
+            button2.AutoSize = true;
+            button2.BackColor = Color.FromArgb(40, 45, 50);
+            button2.FlatAppearance.BorderSize = 0;
+            button2.FlatAppearance.MouseDownBackColor = Color.FromArgb(118, 178, 187);
+            button2.FlatStyle = FlatStyle.Flat;
+            button2.Font = new Font("Ubuntu", 14F, FontStyle.Regular, GraphicsUnit.Point);
+            button2.ForeColor = Color.FromArgb(235, 235, 250);
+            button2.Location = new Point(649, 392);
+            button2.Margin = new Padding(3, 4, 3, 4);
+            button2.Name = "button2";
+            button2.Size = new Size(139, 45);
+            button2.TabIndex = 7;
+            button2.Text = "Create";
+            button2.UseVisualStyleBackColor = false;
+            button2.Click += InitEditor;
             // 
             // CreateMaterial
             // 
@@ -151,6 +148,7 @@
             BackColor = Color.FromArgb(40, 40, 40);
             ClientSize = new Size(800, 450);
             ControlBox = false;
+            Controls.Add(button2);
             Controls.Add(panel2);
             Controls.Add(TitleBar);
             FormBorderStyle = FormBorderStyle.None;
@@ -161,8 +159,8 @@
             TitleBar.ResumeLayout(false);
             panel2.ResumeLayout(false);
             panel2.PerformLayout();
-            contextMenuStrip1.ResumeLayout(false);
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -172,10 +170,8 @@
         private Panel panel1;
         private Panel panel2;
         private Label label1;
-        private OpenFileDialog openFileDialog1;
         private Button button1;
         private Label MaterialPathTextBox;
-        private ContextMenuStrip contextMenuStrip1;
-        private ToolStripMenuItem testToolStripMenuItem;
+        private Button button2;
     }
 }

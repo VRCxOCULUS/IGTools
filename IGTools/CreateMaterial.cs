@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IGTools;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -50,6 +51,11 @@ namespace MaterialEditor
             {
                 MaterialPathTextBox.Text = folderBrowserDialog.SelectedPath;
             }
+        }
+
+        private void InitEditor(object sender, EventArgs e)
+        {
+            this.Close();
         }
 
     }
