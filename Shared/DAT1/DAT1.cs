@@ -90,7 +90,7 @@ namespace DAT1
             {
                 Console.WriteLine($"Block {(i + 1)} ID: 0x{BlockInfos[i].Item1.ToString("X8")}");
                 Console.WriteLine($"Block {(i + 1)} Offset: 0x{BlockInfos[i].Item2.ToString("X")}");
-                Console.WriteLine($"Block {(i + 1)} Size: 0x{BlockInfos[i].Item1} bytes");
+                Console.WriteLine($"Block {(i + 1)} Size: {BlockInfos[i].Item3} bytes");
             }
 
             for (int i = 0; i < FixupInfos.Count; i++)
@@ -111,9 +111,12 @@ namespace DAT1
             }
             string assetType = new string(assetTypeList.ToArray());
 
+
             switch (assetType)
             {
-                case "Config Built File": new Config(br, this); break;
+                case "Config Built File":
+                    ConfigDef config = new ConfigDef(br, this);
+                    break;
                 case "Material Built File": Console.WriteLine("Material Built File"); break;
                 case "Model Built File": Console.WriteLine("Model Built File"); break;
                 case "Texture Built File": Console.WriteLine("Texture Built File"); break;

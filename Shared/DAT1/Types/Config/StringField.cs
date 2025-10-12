@@ -15,26 +15,16 @@ namespace DAT1
     {
         public UInt32 CharLength;
         public UInt32 CRC32;
-        public UInt32 CRC64N;
+        public UInt64 CRC64N;
         public string Value;
 
         public StringField(BinaryReader br, DAT1 header)
         {
             CharLength = br.ReadUInt32();
             CRC32 = br.ReadUInt32();
-            CRC64N = br.ReadUInt32();
+            CRC64N = br.ReadUInt64();
 
-            List<char> ValueList = new List<char> { };
-            while (true)
-            {
-                ValueList.Add(br.ReadChar());
-                if (ValueList.Contains('\0'))
-                {
-                    ValueList.Remove('\0');
-                    break;
-                }
-            }
-            Value = new string(ValueList.ToArray());
+            Value = new string(br.ReadChars((int)CharLength));
         }
     }
 }

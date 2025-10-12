@@ -44,7 +44,7 @@
     <Compile Include="DAT1\CRC32.cs" />
     <Compile Include="DAT1\CRC64.cs" />
     <Compile Include="DAT1\DAT1.cs" />
-    <Compile Include="DAT1\Types\Config\Config.cs" />
+    <Compile Include="DAT1\Types\Config\ConfigDef.cs" />
     <Compile Include="DAT1\Types\Config\StringField.cs" />
     <Compile Include="DAT1\Utils.cs" />
     <Compile Include="Util\Align.cs" />
