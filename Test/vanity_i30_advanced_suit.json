@@ -1,0 +1,52 @@
+{
+  "Def":
+  {
+    "Available": "kDefault",
+    "Category": "kDefaultItem",
+    "ConduitOverrideList":
+    [
+      {
+        "ConduitOverride":
+        {
+          "Conduit":
+          {
+            "AssetPath": "conduit/characters/hero/hero_aud_vanity_spim_default/hero_aud_vanity_spip_default.conduit",
+            "Autoload": false
+          }
+        }
+      }
+    ],
+    "ModelList":
+    [
+      {
+        "BodyType": "kAll",
+        "Model":
+        {
+          "AssetPath": "characters/hero/hero_spiderman_advanced/hero_spiderman_advanced.model",
+          "Autoload": false
+        },
+        "ModelInnerLayer":
+        { "Autoload": false }
+      }
+    ],
+    "Name": "i30_Advanced_Suit",
+    "PartType": "kTypeBareTorsoAndArms",
+    "ShaderUpdater":
+    { "Type": "SkinShaderUpdaterPrius" },
+    "SwitchGroupList":
+    [
+      {
+        "SwitchGroup":
+        {
+          "SwitchGroupName": "SpiderHero_Vanity",
+          "SwitchGroupValue": "Default"
+        }
+      }
+    ]
+  },
+  "Type":
+  { "Type": "VanityItemConfig" },
+  "VaultMetaData":
+  { "CreatedBy": "IGTools" },
+  "Version": "1.2"
+}

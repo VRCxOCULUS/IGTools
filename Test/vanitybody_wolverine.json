@@ -1,0 +1,42 @@
+{
+  "Def":
+  {
+    "AssetReferences":
+    [
+      "ui\\loaded\\authored\\art\\textures\\suits\\suit_classic.texture"
+    ],
+    "Available": "kHero",
+    "Category": "kBodySize",
+    "GameItemData":
+    {
+      "DisplayDescriptionTag": "This suit is the best at what it does, and what it does is look very nice.",
+      "DisplayNameTag": "MODERN BROWN",
+      "Icon":
+      { "AssetPath": "ui/loaded/authored/art/textures/suits/suit_classic.texture" },
+      "Theme":
+      [
+        "kVanity"
+      ]
+    },
+    "ModelList":
+    [
+      {
+        "BodyType": "kAll",
+        "Model":
+        {
+          "AssetPath": "actors/models/test/test_wolverine/test_wolverine.actor",
+          "Autoload": false
+        }
+      }
+    ],
+    "Name": "Wolverine",
+    "PartType": "kTypeBareTorsoAndArms",
+    "ShaderUpdater":
+    { "Type": "SkinShaderUpdaterPrius" }
+  },
+  "Type":
+  { "Type": "VanityItemConfig" },
+  "VaultMetaData":
+  { "CreatedBy": "IGTools" },
+  "Version": "1.2"
+}

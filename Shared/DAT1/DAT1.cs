@@ -24,10 +24,10 @@ namespace DAT1
         public DAT1(BinaryReader br)
         {
             //---Find DAT1 file start---
-            if(br.ReadUInt32() != 4674643 && br.ReadUInt32() != MagicTest)
+            if (br.ReadUInt32() != 4674643 && br.ReadUInt32() != MagicTest)
             {
                 br.BaseStream.Seek(36, 0x00);
-                if(br.ReadUInt32() != MagicTest)
+                if (br.ReadUInt32() != MagicTest)
                 {
                     throw new Exception("Not DAT1 file.");
                 }
@@ -42,7 +42,7 @@ namespace DAT1
                 offset += Align.To16(br.ReadInt32());
                 br.BaseStream.Seek(offset, 0x00);
             }
-            else if(br.ReadUInt32() == MagicTest)
+            else if (br.ReadUInt32() == MagicTest)
             {
                 offset = 0;
             }

@@ -48,6 +48,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="vanitybody_wolverine.config" />
+    <None Include="vanitybody_wolverine.json" />
+    <None Include="vanity_i30_advanced_suit.config" />
+    <None Include="vanity_i30_advanced_suit.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj">

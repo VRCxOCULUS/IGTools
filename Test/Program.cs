@@ -3,7 +3,7 @@ using System.IO;
 
 namespace DAT1
 {
-    internal class Program
+    class Program
     {
         static void Main(string[] args)
         {
