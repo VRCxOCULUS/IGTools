@@ -25,6 +25,15 @@ namespace DAT1
             CRC64N = br.ReadUInt64();
 
             Value = new string(br.ReadChars((int)CharLength));
+
+            //br.BaseStream.Seek(Align.To4((int)br.BaseStream.Position + 1), 0x00);
+
+            br.ReadBytes(4);
+
+            //Console.WriteLine($"Length: {CharLength}");
+            //Console.WriteLine($"CRC32 hash: {CRC32.ToString("X")}");
+            //Console.WriteLine($"Normalized CRC64: {CRC64N.ToString("X")}");
+            Console.WriteLine($"Value: {Value}");
         }
     }
 }

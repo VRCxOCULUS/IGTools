@@ -17,12 +17,13 @@ namespace DAT1
 
         public ConfigBlock(BinaryReader br, DAT1 header, int blockOffset)
         {
-            br.BaseStream.Seek(blockOffset + 0x08, 0x00);
+            br.BaseStream.Seek(blockOffset, 0x00);
 
+            br.ReadUInt64(); // 0x0000000040001503
             FieldCount = br.ReadUInt32();
             ObjectSize = br.ReadUInt32();
-            Console.WriteLine($"FieldCount: {FieldCount.ToString("X")}");
-            Console.WriteLine($"ObjectSize: {ObjectSize.ToString("X")}");
+            //Console.WriteLine($"FieldCount: {FieldCount.ToString("X")}");
+            //Console.WriteLine($"ObjectSize: {ObjectSize.ToString("X")}");
 
 
             var tempOffset = br.BaseStream.Position;
@@ -30,12 +31,12 @@ namespace DAT1
             {
                 br.BaseStream.Seek(tempOffset + (i * 8), 0x00);
                 var ID = br.ReadUInt32();
-                Console.WriteLine($"ID: {ID.ToString("X")}");
+                //Console.WriteLine($"ID: {ID.ToString("X")}");
                 var Flags = br.ReadUInt16();
-                Console.WriteLine($"Flags: {Flags.ToString("X")}");
+                //Console.WriteLine($"Flags: {Flags.ToString("X")}");
                 br.BaseStream.Seek(br.BaseStream.Position + 0x01, 0x00);
                 var Type = br.ReadByte();
-                Console.WriteLine($"Type: {Type.ToString("X")}");
+                //Console.WriteLine($"Type: {Type.ToString("X")}");
                 FieldInfos.Add((ID, Flags, Type));
             }
             tempOffset = br.BaseStream.Position;
@@ -68,32 +69,32 @@ namespace DAT1
             {
                 switch (FieldInfos[i].Item3)
                 {
-                    /*UInt8*/   case 0x00: FieldValues.Add(br.ReadSByte()); break;
-                    /*UInt16*/  case 0x01: FieldValues.Add(br.ReadInt16()); break;
-                    /*UInt32*/  case 0x02: FieldValues.Add(br.ReadInt32()); break;
-                    /*Int8*/    case 0x04: FieldValues.Add(br.ReadByte()); break;
-                    /*Int16*/   case 0x05: FieldValues.Add(br.ReadUInt16()); break;
-                    /*Int32*/   case 0x06: FieldValues.Add(br.ReadInt32()); break;
-                    /*Float*/   case 0x08: FieldValues.Add(br.ReadSingle()); break;
-                    /*String*/  case 0x0A: Console.WriteLine("String Field"); FieldValues.Add(new StringField(br, header)); break;
-                    /*Object*/  case 0x0D: FieldValues.Add(new ConfigBlock(br, header, (int)br.BaseStream.Position)); break;
-                    /*Bool*/    case 0x0F: FieldValues.Add(br.ReadByte() == 1 ? true : false); br.BaseStream.Seek(Align.To4((int)br.BaseStream.Position), 0x00); break;
+                    /*UInt8*/   case 0x00: byte UInt8value = br.ReadByte(); FieldValues.Add(UInt8value); Console.WriteLine($"Value: {UInt8value}"); break;
+                    /*UInt16*/  case 0x01: UInt16 UInt16value = br.ReadUInt16(); FieldValues.Add(UInt16value); Console.WriteLine($"Value: {UInt16value}"); break;
+                    /*UInt32*/  case 0x02: UInt32 UInt32value = br.ReadUInt32(); FieldValues.Add(UInt32value); Console.WriteLine($"Value: {UInt32value}"); break;
+                    /*Int8*/    case 0x04: sbyte Int8value = br.ReadSByte(); FieldValues.Add(Int8value); Console.WriteLine($"Value: {Int8value}"); break;
+                    /*Int16*/   case 0x05: Int16 Int16value = br.ReadInt16(); FieldValues.Add(Int16value); Console.WriteLine($"Value: {Int16value}"); break;
+                    /*Int32*/   case 0x06: Int32 Int32value = br.ReadInt32(); FieldValues.Add(Int32value); Console.WriteLine($"Value: {Int32value}"); break;
+                    /*Float*/   case 0x08: float Floatvalue = br.ReadSingle(); FieldValues.Add(Floatvalue); Console.WriteLine($"Value: {Floatvalue}"); break;
+                    /*String*/  case 0x0A: string Stringvalue; FieldValues.Add(new StringField(br, header)); break;
+                    /*Object*/  case 0x0D: FieldValues.Add(new ConfigBlock(br, header, (int)br.BaseStream.Position)); Console.WriteLine("Value: Object"); break;
+                    /*Bool*/    case 0x0F: bool boolValue = (br.ReadInt32() == 1 ? true : false);  FieldValues.Add(boolValue); Console.WriteLine($"Value: {boolValue}"); break;
                     /*ID*/      case 0x11: FieldValues.Add(br.ReadUInt64()); break;
                     /*Null*/    case 0x13: FieldValues.Add(null); break;
                     /*Unknown*/ default:   Console.WriteLine($"Unknown Field Type: {FieldInfos[i].Item3.ToString("X")}"); break;
                 }
             }
 
-            foreach (object item in FieldValues)
-            {
-                if (item is StringField stringField)
-                {
-                    Console.WriteLine($"Length: {stringField.CharLength}");
-                    Console.WriteLine($"CRC32 hash: {stringField.CRC32.ToString("X")}");
-                    Console.WriteLine($"Normalized CRC64: {stringField.CRC64N.ToString("X")}");
-                    Console.WriteLine($"Value: {stringField.Value}");
-                }
-            }
+            //foreach (object item in FieldValues)
+            //{
+            //    if (item is StringField stringField)
+            //    {
+            //        Console.WriteLine($"Length: {stringField.CharLength}");
+            //        Console.WriteLine($"CRC32 hash: {stringField.CRC32.ToString("X")}");
+            //        Console.WriteLine($"Normalized CRC64: {stringField.CRC64N.ToString("X")}");
+            //        Console.WriteLine($"Value: {stringField.Value}");
+            //    }
+            //}
         }
     }
 
