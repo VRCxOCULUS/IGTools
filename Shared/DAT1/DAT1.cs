@@ -9,6 +9,7 @@ namespace DAT1
 {
     public class DAT1
     {
+        public const string DDLAuthor = "";
         public Int32 MagicTest => 1145132081;
         public Int32 offset = 0x10;
 
@@ -115,7 +116,7 @@ namespace DAT1
             switch (assetType)
             {
                 case "Config Built File":
-                    ConfigDef config = new ConfigDef(br, this);
+                    Config config = new Config(br, this);
                     break;
                 case "Material Built File": Console.WriteLine("Material Built File"); break;
                 case "Model Built File": Console.WriteLine("Model Built File"); break;

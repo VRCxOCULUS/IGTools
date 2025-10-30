@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextureViewer", "Testing\Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{D4CE476D-202E-42DB-B328-B5412405B925}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelExporter", "ModelExporter\ModelExporter.csproj", "{AF7F6517-7C71-47F9-805B-343BC5AFBAD5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{D4CE476D-202E-42DB-B328-B5412405B925}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4CE476D-202E-42DB-B328-B5412405B925}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4CE476D-202E-42DB-B328-B5412405B925}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF7F6517-7C71-47F9-805B-343BC5AFBAD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF7F6517-7C71-47F9-805B-343BC5AFBAD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF7F6517-7C71-47F9-805B-343BC5AFBAD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF7F6517-7C71-47F9-805B-343BC5AFBAD5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
