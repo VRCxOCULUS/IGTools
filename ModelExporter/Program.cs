@@ -1,21 +1,31 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SharpGLTF.Schema2;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
+
+using SharpGLTF.Scenes;
+using SharpGLTF.Schema2;
+using SharpGLTF.Materials;
+using SharpGLTF.Geometry;
+using SharpGLTF.Geometry.VertexTypes;
 using static ModelExporter.Model;
 
 namespace ModelExporter
 {
     public static class GlobalJson
     {
-        private static readonly string _path = "model_desc.json";
+        static readonly string _path = "Output/model_desc.json";
 
         public static void WriteObject<T>(string key, T obj)
         {
             JObject root;
+
+            if(!Directory.Exists(_path))
+            {
+                Directory.CreateDirectory("Output");
+            }
 
             // Load or create a root JSON object
             if (File.Exists(_path))
@@ -930,18 +940,22 @@ namespace ModelExporter
                             m_Subsets[i].m_PadB = br.ReadUInt32();
                         }
 
+                        var material = new MaterialBuilder("Test Material");
 
+                        var meshBuilder = new MeshBuilder<VertexPosition>("MeshTest");
 
-                        GlobalJson.WriteObject("Model Built", model_built);
-                        GlobalJson.WriteObject("Model Joint Hierarchy", joint_hierarchy);
-                        for (int i = 0; i < m_SubsetCount; i++)
-                        {
-                            if (m_Subsets[i].m_LodMask != 1)
-                            {
-                                continue;
-                            }
-                            GlobalJson.WriteObject("Model Subset " + i, m_Subsets[i]);
-                        }
+                        var mesh = meshBuilder.UsePrimitive(material);
+
+                        mesh.AddTriangle(new VertexPosition(0, 0, 0), new VertexPosition(1, 0, 0), new VertexPosition(0, 1, 0));
+                        mesh.AddTriangle(new VertexPosition(0, 1, 0), new VertexPosition(1, 0, 0), new VertexPosition(1, 1, 0));
+
+                        var scene = new SceneBuilder();
+
+                        scene.AddRigidMesh(meshBuilder, Matrix4x4.Identity);
+
+                        var model = scene.ToGltf2();
+
+                        model.SaveGLB("Output/model.glb");
                     }
                     else
                     {
@@ -962,49 +976,14 @@ namespace ModelExporter
 
     internal class Program
     {
+
         static void Main(string[] args)
         {
             FileStream hero_spiderman_advanced = File.Open(@"C:\Users\27alexander.smith_ca\Desktop\Personal\DAT1\DAT1\GameFiles\hero_spiderman_advanced.model", FileMode.Open);
             FileStream hero_spiderman_blacksuit = File.Open(@"D:\hero_spiderman_blacksuit.model", FileMode.Open);
             FileStream hero_spiderman_arachknight = File.Open(@"D:\hero_spiderman_arachknight.model", FileMode.Open);
+
             new Model(new BinaryReader(hero_spiderman_advanced));
-
-
-
-
-            //// create two materials
-
-            //var material1 = new MaterialBuilder()
-            //    .WithDoubleSide(true)
-            //    .WithMetallicRoughnessShader()
-            //    .WithChannelParam(KnownChannel.BaseColor, KnownProperty.RGBA, new Vector4(1, 0, 0, 1));
-
-            //var material2 = new MaterialBuilder()
-            //    .WithDoubleSide(true)
-            //    .WithMetallicRoughnessShader()
-            //    .WithChannelParam(KnownChannel.BaseColor, KnownProperty.RGBA, new Vector4(1, 0, 1, 1));
-
-            //// create a mesh with two primitives, one for each material
-
-            //var mesh = new MeshBuilder<VERTEX>("mesh");
-
-            //var prim = mesh.UsePrimitive(material1);
-
-            //prim = mesh.UsePrimitive(material2);
-            //prim.AddQuadrangle(new VERTEX(-5, 0, 3), new VERTEX(0, -5, 3), new VERTEX(5, 0, 3), new VERTEX(0, 5, 3));
-
-            //// create a scene
-
-            //var scene = new SharpGLTF.Scenes.SceneBuilder();
-
-            //scene.AddRigidMesh(mesh, Matrix4x4.Identity);
-
-            //// save the model in different formats
-
-            //var model = scene.ToGltf2();
-            //model.SaveAsWavefront("mesh.obj");
-            //model.SaveGLB("mesh.glb");
-            //model.SaveGLTF("mesh.gltf");
         }
     }
 }
