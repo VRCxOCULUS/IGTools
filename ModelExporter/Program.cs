@@ -1,15 +1,13 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SharpGLTF.Geometry;
+using SharpGLTF.Geometry.VertexTypes;
+using SharpGLTF.Materials;
+using SharpGLTF.Scenes;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
-
-using SharpGLTF.Scenes;
-using SharpGLTF.Schema2;
-using SharpGLTF.Materials;
-using SharpGLTF.Geometry;
-using SharpGLTF.Geometry.VertexTypes;
 using static ModelExporter.Model;
 
 namespace ModelExporter
@@ -225,10 +223,10 @@ namespace ModelExporter
             );
         }
 
-        public static void DecodeNormalTangent(float[] Position, uint NormalTangent, out Vector3 normal, out Vector3 tangent)
+        public static void DecodeNormalTangent(ModelStdVertex stdVertex, out Vector3 normal, out Vector3 tangent)
         {
-            Vector4 normalTanEnc = VecFromR10G10B10A2_UNORM(NormalTangent);
-            int posWAbs = Math.Abs((int)Position[3]);
+            Vector4 normalTanEnc = VecFromR10G10B10A2_UNORM((uint)stdVertex.m_NormalTangent);
+            int posWAbs = Math.Abs((int)stdVertex.m_Position_W);
 
             float nt_zs = normalTanEnc.W * 3.0f;
             float normalZ = Saturate(nt_zs - 1.0f);
@@ -242,26 +240,37 @@ namespace ModelExporter
             tangent = NormalDecodeAzimuthal(new Vector3(normalTanEnc.Z, tangentYEnc, tangentZ));
         }
 
+        public static Vector3 DecodeNormal(ModelStdVertex stdVertex)
+        {
+            // Decode the 10:10:10:2 packed normal/tangent
+            Vector4 normalTanEnc = VecFromR10G10B10A2_UNORM((uint)stdVertex.m_NormalTangent);
+
+            // Compute Z using the official formula
+            float nt_zs = normalTanEnc.W * 3.0f;
+            float normalZ = Saturate(nt_zs - 1.0f);
+
+            // Decode azimuthal normal
+            return NormalDecodeAzimuthal(new Vector3(normalTanEnc.X, normalTanEnc.Y, normalZ));
+        }
+
+
         public static Vector3 NormalDecodeAzimuthal(Vector3 azim)
         {
-            // Scale and bias from [0,1] → [-√2, √2]
-            float scale = 4.0f / 1.41421356f;
+            // scale and bias from [0,1] → [-√2, √2]
+            float scale = 4.0f / 1.41421356f; // 4 / sqrt(2)
             float bias = 2.0f / 1.41421356f;
 
-            Vector2 enc = new Vector2(
-                azim.X * scale - bias,
-                azim.Y * scale - bias
-            );
+            float ex = azim.X * scale - bias;
+            float ey = azim.Y * scale - bias;
 
-            float f = Vector2.Dot(enc, enc);
+            float f = ex * ex + ey * ey;
 
-            Vector3 vec;
-            float s = (float)Math.Sqrt(Math.Max(0.0f, 1.0f - f * 0.25f));
+            float s = (float)Math.Sqrt(Math.Max(0.0, 1.0 - f * 0.25));
 
-            vec = new Vector3(
-                enc.X * s,
-                enc.Y * s,
-                Math.Abs(1.0f - f * 0.5f)
+            Vector3 vec = new Vector3(
+                ex * s,
+                ey * s,
+                (float)Math.Abs(1.0 - f * 0.5)
             );
 
             if (azim.Z < 0.5f)
@@ -269,6 +278,8 @@ namespace ModelExporter
 
             return vec;
         }
+
+
         public static float Saturate(float x)
         {
             return Math.Min(Math.Max(x, 0.0f), 1.0f);
@@ -278,6 +289,24 @@ namespace ModelExporter
     }
     public class Model
     {
+        public struct ModelStdVertex
+        {
+            public Int16 m_Position_X;
+            public Int16 m_Position_Y;
+            public Int16 m_Position_Z;
+            public Int16 m_Position_W;
+            public Int32 m_NormalTangent;
+            public Int16 m_UV0_U;
+            public Int16 m_UV0_V;
+        }
+
+        public struct Index
+        {
+            public UInt16 m_VertexA;
+            public UInt16 m_VertexB;
+            public UInt16 m_VertexC;
+        }
+
         public enum ModelHash : UInt32
         {
             kDaeFileNameMemberHash = 0xca6eaa13, // buildHash32("m_DaeFileName")
@@ -505,13 +534,6 @@ namespace ModelExporter
             public UInt32 m_PadB;
         }
 
-        public struct ModelStdVertex
-        {
-            public Int16[] m_Position; // 4
-            public Int32 m_NormalTangent;
-            public Int16[] m_UV0; // 2
-        }
-
         public struct Vec3
         {
             public float x;
@@ -616,6 +638,94 @@ namespace ModelExporter
             public UInt16 m_IdB;
         }
 
+        public struct ModelLookLod
+        {
+            public UInt16 m_SubsetIdStart;                       // The index of the first subset in this lod, in the Look's m_SubsetIds array
+            public UInt16 m_SubsetCount;                         // The number of subsets in this lod
+        };
+
+        public struct ModelLook
+        {
+            public ModelLookLod[] m_Lods;  //kModelGeomLodMax | 8
+            public UInt32 m_LodCount;
+            public UInt32 m_MaxSubsetSkinCount;
+            public UInt64 m_SubsetIdsPointer; // UInt16
+            public UInt64 m_RemapPointer; // ModelLookRemap
+            public UInt64 m_Pad;
+        }
+
+        public struct ModelMaterialInfo
+        {
+            public UInt32 m_AssetNameOffset;
+            public UInt32 m_Pad1;
+            public UInt32 m_MaterialMappingNameOffset;
+            public UInt32 m_Pad2;
+        }
+
+        public struct ModelMaterial
+        {
+            public UInt64 m_MaterialId;
+            public UInt32 m_MaterialMappingNameHash;
+            public UInt32 m_Flags;
+        }
+
+        public struct AnimVertInfo2
+        {
+            public UInt64 m_MorphInfoPointer;   // AnimVertMorph2Info
+            public UInt64 m_GeomInfoPointer;          // AnimGeomInfo
+            public UInt64 m_GeomMeshInfoPointer;      // AnimGeomInfo
+            public UInt64 m_ZivaInfoPointer;     // AnimVertZivaInfo2
+            public UInt64 m_SmoothInfoPointer; // AnimVertSmoothInfo2
+        };
+
+        public struct AnimRenderBuffer
+        {
+            public UInt32 m_Format;//      : 8;      // DXGI_FORMAT
+            public UInt32 m_ElemSize;//    : 24;
+            
+            public UInt32 m_ElemCount;//   : 31;
+            public UInt32 m_Initialized;// : 1;
+            
+            public UInt64 m_DataPointer;
+            public UInt64 m_SRVPointer;
+            public UInt64 m_UAVPointer;
+            public UInt64 m_OwnerNamePointer;
+        }
+
+        public struct AnimZiva2Info
+        {
+            public byte m_Flags;
+            public byte m_LodLevel;
+            public byte m_ElemCount;
+            public byte m_Pad;
+
+            public UInt16 m_SliderCount;
+            public UInt16 m_SliderMorphCount;
+            public UInt16 m_JointCountTotal;                  // total joint count
+
+            public byte m_GpuStageCount;
+            public byte m_GpuBufferCount;
+
+            public float m_LodBlendOutFactor;
+
+            public UInt32 m_VertCountMax;                     // across all elems
+            public UInt32 m_VertLookupCount;
+
+            public UInt64 m_Elems;              //AnimVertZivaElem2
+            public UInt64 m_JointLookup;           //HashLookupElem           | map from ig joint  index to ziva joint index
+            public UInt64 m_Sliders;      //AnimVertZivaSliderInfo2  | sliders followed by morph sliders (terminated by 0xffffffff)
+            public UInt64 m_SliderLookup;   //AnimVertZivaSliderId2    | map sliders (global) to elem (ziva) sliders
+            public UInt64 m_SubsetElems;  //AnimVertZivaSubsetElem2  | one per subset
+            public UInt64 m_VertLookup;                  //uint32_t                 | map from ig vertex index to ziva vertex index
+
+            public UInt64 m_ZivaBuffersGpu;  //AnimRenderBuffer
+
+            public UInt64 m_GpuStages;  //AnimVertZivaGpuStage
+
+            public AnimRenderBuffer m_VertLookupBufferGpu;
+        }
+
+
 
         public UInt32 m_DataFileId;
         public UInt32 m_VersionNumber;
@@ -630,8 +740,11 @@ namespace ModelExporter
             public UInt32 m_Size;
         }
 
-        public Model(BinaryReader br)
+        public Model(FileStream Asset)
         {
+            BinaryReader br = new BinaryReader(Asset);
+            string m_ModelName = Path.GetFileNameWithoutExtension(Asset.Name);
+
             m_DataFileId = br.ReadUInt32();
             m_VersionNumber = br.ReadUInt32();
             m_FileSize = br.ReadUInt32();
@@ -649,328 +762,460 @@ namespace ModelExporter
 
 
             int BuiltOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelBuiltHash);
-            if (BuiltOffset != -1)
+            if (BuiltOffset == -1)
+                throw new Exception("Model Built block not found.");
+
+            br.BaseStream.Seek(BuiltOffset, SeekOrigin.Begin);
+            ModelBuilt model_built = new ModelBuilt()
             {
-                br.BaseStream.Seek(BuiltOffset, SeekOrigin.Begin);
-                ModelBuilt model_built = new ModelBuilt()
+                m_Flags = br.ReadUInt64(),
+                m_AvMaterialHash = br.ReadUInt32(),
+                m_AudioMaterialHash = br.ReadUInt32(),
+
+                m_GeomLodBiasI16 = br.ReadInt16(),
+                m_ShadowBiasI16 = br.ReadInt16(),
+                m_ZBiasI16 = br.ReadInt16(),
+                m_AlphaSortBiasI16 = br.ReadInt16(),
+                m_FadeOutDistU16 = br.ReadUInt16(),
+                m_ShadowFadeDistU16 = br.ReadUInt16(),
+                m_GBufferObjectType = (GBufferObjectType)br.ReadByte(),
+                m_GeomLodGenType = br.ReadByte(),
+                m_AutoGeomLodBias = br.ReadInt16(),
+
+                m_BSphere = new BSphere
                 {
-                    m_Flags = br.ReadUInt64(),
-                    m_AvMaterialHash = br.ReadUInt32(),
-                    m_AudioMaterialHash = br.ReadUInt32(),
-
-                    m_GeomLodBiasI16 = br.ReadInt16(),
-                    m_ShadowBiasI16 = br.ReadInt16(),
-                    m_ZBiasI16 = br.ReadInt16(),
-                    m_AlphaSortBiasI16 = br.ReadInt16(),
-                    m_FadeOutDistU16 = br.ReadUInt16(),
-                    m_ShadowFadeDistU16 = br.ReadUInt16(),
-                    m_GBufferObjectType = (GBufferObjectType)br.ReadByte(),
-                    m_GeomLodGenType = br.ReadByte(),
-                    m_AutoGeomLodBias = br.ReadInt16(),
-
-                    m_BSphere = new BSphere
-                    {
-                        m_Center = new Vec3
-                        {
-                            x = br.ReadSingle(),
-                            y = br.ReadSingle(),
-                            z = br.ReadSingle()
-                        },
-                        m_Radius = br.ReadSingle()
-                    },
-                    m_AABBExtents = new Vec3
+                    m_Center = new Vec3
                     {
                         x = br.ReadSingle(),
                         y = br.ReadSingle(),
                         z = br.ReadSingle()
                     },
-                    m_CommonMetersPerUnit = br.ReadSingle(),
-                    m_VertexMetersPerUnit = br.ReadSingle(),
-                    m_CustomStreamCount = br.ReadUInt32(),
-                    m_ContentModelFlags = br.ReadUInt16(),
-                    m_SubsetLodMaskCount = br.ReadUInt16(),
-                    m_LocatorCount = br.ReadUInt16(),
-                    m_StrandSubsetCount = br.ReadSByte(),
-                    m_LGCaptureBehavior = br.ReadSByte(),
+                    m_Radius = br.ReadSingle()
+                },
+                m_AABBExtents = new Vec3
+                {
+                    x = br.ReadSingle(),
+                    y = br.ReadSingle(),
+                    z = br.ReadSingle()
+                },
+                m_CommonMetersPerUnit = br.ReadSingle(),
+                m_VertexMetersPerUnit = br.ReadSingle(),
+                m_CustomStreamCount = br.ReadUInt32(),
+                m_ContentModelFlags = br.ReadUInt16(),
+                m_SubsetLodMaskCount = br.ReadUInt16(),
+                m_LocatorCount = br.ReadUInt16(),
+                m_StrandSubsetCount = br.ReadSByte(),
+                m_LGCaptureBehavior = br.ReadSByte(),
 
-                    m_Pad = new uint[4]
-                    {
+                m_Pad = new uint[4]
+                {
                         br.ReadUInt32(),
                         br.ReadUInt32(),
                         br.ReadUInt32(),
                         br.ReadUInt32()
-                    }
-                };
+                }
+            };
 
 
-                int JointHierarchyOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointHierarchyHash);
-                if (JointHierarchyOffset != -1)
+            int JointHierarchyOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointHierarchyHash);
+            if (JointHierarchyOffset == -1)
+                throw new Exception("Model Joint Hierarchy block not found.");
+
+            int JointBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointHash);
+            int JointLookupBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointLookupHash);
+            int BindPoseBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelBindPoseHash);
+            int InvBindPoseBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelInvBindPoseHash);
+            int JointBspheresBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointBspheresHash);
+            int MirrorIdsBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelMirrorIdsHash);
+            int LeafIdsBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelLeafIdsHash);
+            int SplineRadiiBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelSplineRadiiHash);
+
+            if (BindPoseBlockOffset == -1 || JointLookupBlockOffset == -1)
+            {
+                throw new Exception("Essential Joint Hierarchy Blocks not found.");
+            }
+
+            br.BaseStream.Seek(JointHierarchyOffset, SeekOrigin.Begin);
+
+            JointHierarchyBuilt joint_hierarchy_built = new JointHierarchyBuilt
+            {
+                m_Flags = br.ReadUInt16(),
+                m_JointCount = br.ReadUInt16(),
+                m_MirrorCount = br.ReadUInt16(),
+                m_LeafCount = br.ReadUInt16(),
+                m_Pad1 = br.ReadBytes(8),
+                m_JointDataHash = br.ReadUInt64(),
+                m_Pad = br.ReadBytes(56)
+            };
+
+            JointHierarchy joint_hierarchy = new JointHierarchy
+            {
+                m_Flags = joint_hierarchy_built.m_Flags,
+                m_JointCount = joint_hierarchy_built.m_JointCount,
+                m_MirrorCount = joint_hierarchy_built.m_MirrorCount,
+                m_LeafCount = joint_hierarchy_built.m_LeafCount,
+
+                m_AnimSplineMeshRadius = (UInt64)(SplineRadiiBlockOffset == -1 ? 0 : SplineRadiiBlockOffset),
+
+                m_JointDataHash = joint_hierarchy_built.m_JointDataHash
+            };
+
+            AnimJoint[] m_Joints = new AnimJoint[joint_hierarchy.m_JointCount];
+            br.BaseStream.Seek(JointBlockOffset, SeekOrigin.Begin);
+            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            {
+                m_Joints[i].m_ParentIndex = br.ReadInt16();
+                m_Joints[i].m_JointIndex = br.ReadUInt16();
+                m_Joints[i].m_SubTreeJointCount = br.ReadUInt16();
+                m_Joints[i].m_Flags = (AnimJointFlags)br.ReadUInt16();
+                m_Joints[i].m_NameHash = br.ReadUInt32();
+                m_Joints[i].m_NameOffset = br.ReadUInt32();
+            }
+
+            joint_hierarchy.m_Joints = m_Joints;
+
+            List<string> boneNames = new List<string>();
+            for (int i = 0; i < m_Joints.Length; i++)
+            {
+                br.BaseStream.Seek(JointBlockOffset + (16 * i) + m_Joints[i].m_NameOffset, SeekOrigin.Begin);
+                boneNames.Add(Utils.ReadNullTermString(br));
+            }
+            HashLookupElem[] JointLookup = new HashLookupElem[joint_hierarchy.m_JointCount];
+            br.BaseStream.Seek(JointLookupBlockOffset, SeekOrigin.Begin);
+            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            {
+                JointLookup[i].m_Hash = br.ReadUInt32();
+                JointLookup[i].m_Value = br.ReadUInt32();
+            }
+            joint_hierarchy.m_JointLookup = JointLookup;
+
+
+            AnimJointPose[] BindPose = new AnimJointPose[joint_hierarchy.m_JointCount];
+            br.BaseStream.Seek(BindPoseBlockOffset, SeekOrigin.Begin);
+            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            {
+                BindPose[i].m_s = new Vec4
                 {
-                    int JointBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointHash);
-                    int JointLookupBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointLookupHash);
-                    int BindPoseBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelBindPoseHash);
-                    int InvBindPoseBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelInvBindPoseHash);
-                    int JointBspheresBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointBspheresHash);
-                    int MirrorIdsBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelMirrorIdsHash);
-                    int LeafIdsBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelLeafIdsHash);
-                    int SplineRadiiBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelSplineRadiiHash);
+                    x = br.ReadSingle(),
+                    y = br.ReadSingle(),
+                    z = br.ReadSingle(),
+                    w = br.ReadSingle(),
+                };
+                BindPose[i].m_q = new Quat
+                {
+                    x = br.ReadSingle(),
+                    y = br.ReadSingle(),
+                    z = br.ReadSingle(),
+                    w = br.ReadSingle(),
+                };
+                BindPose[i].m_t = new Vec4
+                {
+                    x = br.ReadSingle(),
+                    y = br.ReadSingle(),
+                    z = br.ReadSingle(),
+                    w = br.ReadSingle(),
+                };
+            }
+            joint_hierarchy.m_JointLocalBindPoses = BindPose;
 
-                    if (BindPoseBlockOffset == -1 || JointLookupBlockOffset == -1)
+            Mat4[] InvBindPose = new Mat4[joint_hierarchy.m_JointCount];
+            br.BaseStream.Seek(InvBindPoseBlockOffset, SeekOrigin.Begin);
+            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            {
+                InvBindPose[i] = new Mat4
+                {
+                    x = new Vec3
                     {
-                        throw new Exception("Essential Joint Hierarchy Blocks not found.");
-                    }
-
-                    br.BaseStream.Seek(JointHierarchyOffset, SeekOrigin.Begin);
-
-                    JointHierarchyBuilt joint_hierarchy_built = new JointHierarchyBuilt
+                        x = br.ReadSingle(),
+                        y = br.ReadSingle(),
+                        z = br.ReadSingle()
+                    },
+                    y = new Vec3
                     {
-                        m_Flags = br.ReadUInt16(),
-                        m_JointCount = br.ReadUInt16(),
-                        m_MirrorCount = br.ReadUInt16(),
-                        m_LeafCount = br.ReadUInt16(),
-                        m_Pad1 = br.ReadBytes(8),
-                        m_JointDataHash = br.ReadUInt64(),
-                        m_Pad = br.ReadBytes(56)
-                    };
-
-                    JointHierarchy joint_hierarchy = new JointHierarchy
+                        x = br.ReadSingle(),
+                        y = br.ReadSingle(),
+                        z = br.ReadSingle()
+                    },
+                    z = new Vec3
                     {
-                        m_Flags = joint_hierarchy_built.m_Flags,
-                        m_JointCount = joint_hierarchy_built.m_JointCount,
-                        m_MirrorCount = joint_hierarchy_built.m_MirrorCount,
-                        m_LeafCount = joint_hierarchy_built.m_LeafCount,
-
-                        m_AnimSplineMeshRadius = (UInt64)(SplineRadiiBlockOffset == -1 ? 0 : SplineRadiiBlockOffset),
-
-                        m_JointDataHash = joint_hierarchy_built.m_JointDataHash
-                    };
-
-                    AnimJoint[] m_Joints = new AnimJoint[joint_hierarchy.m_JointCount];
-                    br.BaseStream.Seek(JointBlockOffset, SeekOrigin.Begin);
-                    for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+                        x = br.ReadSingle(),
+                        y = br.ReadSingle(),
+                        z = br.ReadSingle()
+                    },
+                    w = new Vec3
                     {
-                        m_Joints[i].m_ParentIndex = br.ReadInt16();
-                        m_Joints[i].m_JointIndex = br.ReadUInt16();
-                        m_Joints[i].m_SubTreeJointCount = br.ReadUInt16();
-                        m_Joints[i].m_Flags = (AnimJointFlags)br.ReadUInt16();
-                        m_Joints[i].m_NameHash = br.ReadUInt32();
-                        m_Joints[i].m_NameOffset = br.ReadUInt32();
-                    }
-
-                    joint_hierarchy.m_Joints = m_Joints;
-
-                    List<string> boneNames = new List<string>();
-                    for (int i = 0; i < m_Joints.Length; i++)
-                    {
-                        br.BaseStream.Seek(JointBlockOffset + (16 * i) + m_Joints[i].m_NameOffset, SeekOrigin.Begin);
-                        boneNames.Add(Utils.ReadNullTermString(br));
-                    }
-                    HashLookupElem[] JointLookup = new HashLookupElem[joint_hierarchy.m_JointCount];
-                    br.BaseStream.Seek(JointLookupBlockOffset, SeekOrigin.Begin);
-                    for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
-                    {
-                        JointLookup[i].m_Hash = br.ReadUInt32();
-                        JointLookup[i].m_Value = br.ReadUInt32();
-                    }
-                    joint_hierarchy.m_JointLookup = JointLookup;
+                        x = br.ReadSingle(),
+                        y = br.ReadSingle(),
+                        z = br.ReadSingle()
+                    },
+                };
+            }
+            joint_hierarchy.m_JointInvBindMats = InvBindPose;
 
 
-                    AnimJointPose[] BindPose = new AnimJointPose[joint_hierarchy.m_JointCount];
-                    br.BaseStream.Seek(BindPoseBlockOffset, SeekOrigin.Begin);
-                    for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
-                    {
-                        BindPose[i].m_s = new Vec4
-                        {
-                            x = br.ReadSingle(),
-                            y = br.ReadSingle(),
-                            z = br.ReadSingle(),
-                            w = br.ReadSingle(),
-                        };
-                        BindPose[i].m_q = new Quat
-                        {
-                            x = br.ReadSingle(),
-                            y = br.ReadSingle(),
-                            z = br.ReadSingle(),
-                            w = br.ReadSingle(),
-                        };
-                        BindPose[i].m_t = new Vec4
-                        {
-                            x = br.ReadSingle(),
-                            y = br.ReadSingle(),
-                            z = br.ReadSingle(),
-                            w = br.ReadSingle(),
-                        };
-                    }
-                    joint_hierarchy.m_JointLocalBindPoses = BindPose;
-
-                    Mat4[] InvBindPose = new Mat4[joint_hierarchy.m_JointCount];
-                    br.BaseStream.Seek(InvBindPoseBlockOffset, SeekOrigin.Begin);
-                    for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
-                    {
-                        InvBindPose[i] = new Mat4
-                        {
-                            x = new Vec3
-                            {
-                                x = br.ReadSingle(),
-                                y = br.ReadSingle(),
-                                z = br.ReadSingle()
-                            },
-                            y = new Vec3
-                            {
-                                x = br.ReadSingle(),
-                                y = br.ReadSingle(),
-                                z = br.ReadSingle()
-                            },
-                            z = new Vec3
-                            {
-                                x = br.ReadSingle(),
-                                y = br.ReadSingle(),
-                                z = br.ReadSingle()
-                            },
-                            w = new Vec3
-                            {
-                                x = br.ReadSingle(),
-                                y = br.ReadSingle(),
-                                z = br.ReadSingle()
-                            },
-                        };
-                    }
-                    joint_hierarchy.m_JointInvBindMats = InvBindPose;
-
-
-                    br.BaseStream.Seek(JointBspheresBlockOffset, SeekOrigin.Begin);
-                    JointBSpheres jointBSpheres = new JointBSpheres();
-                    jointBSpheres.m_BSphereCount = br.ReadUInt32();
-                    jointBSpheres.m_Pad = new UInt32[3]
-                    {
+            br.BaseStream.Seek(JointBspheresBlockOffset, SeekOrigin.Begin);
+            JointBSpheres jointBSpheres = new JointBSpheres();
+            jointBSpheres.m_BSphereCount = br.ReadUInt32();
+            jointBSpheres.m_Pad = new UInt32[3]
+            {
                     br.ReadUInt32(),
                     br.ReadUInt32(),
                     br.ReadUInt32()
-                    };
-                    jointBSpheres.m_BSpheres = new JointBSphereElem[jointBSpheres.m_BSphereCount];
-                    for (int i = 0; i < jointBSpheres.m_BSphereCount; i++)
-                    {
-                        jointBSpheres.m_BSpheres[i].m_BSphere = new BSphere
-                        {
-                            m_Center = new Vec3
-                            {
-                                x = br.ReadSingle(),
-                                y = br.ReadSingle(),
-                                z = br.ReadSingle()
-                            },
-                            m_Radius = br.ReadSingle()
-                        };
-                        jointBSpheres.m_BSpheres[i].m_Id = br.ReadUInt16();
-                        jointBSpheres.m_BSpheres[i].m_Pad = br.ReadUInt16();
-                    }
-                    joint_hierarchy.m_JointBSpheres = jointBSpheres;
-
-                    JointMirrorId[] jointMirrorId = new JointMirrorId[joint_hierarchy.m_MirrorCount];
-                    br.BaseStream.Seek(MirrorIdsBlockOffset, SeekOrigin.Begin);
-                    for (int i = 0; i < joint_hierarchy.m_MirrorCount; i++)
-                    {
-                        jointMirrorId[i].m_IdA = br.ReadUInt16();
-                        jointMirrorId[i].m_IdB = br.ReadUInt16();
-                    }
-
-                    joint_hierarchy.m_MirrorIds = jointMirrorId;
-
-                    UInt16[] jointLeafIds = new UInt16[joint_hierarchy.m_LeafCount];
-                    br.BaseStream.Seek(LeafIdsBlockOffset, SeekOrigin.Begin);
-                    for (int i = 0; i < joint_hierarchy.m_LeafCount; i++)
-                    {
-                        jointLeafIds[i] = br.ReadUInt16();
-                    }
-
-                    joint_hierarchy.m_LeafIds = jointLeafIds;
-
-                    int SubsetBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelSubsetHash);
-                    if (SubsetBlockOffset != -1)
-                    {
-                        int m_SubsetCount = (int)(Utils.GetBlockById(blockHeaders, ModelHash.kModelSubsetHash).m_Size / 128);
-                        ModelSubset[] m_Subsets = new ModelSubset[m_SubsetCount];
-                        br.BaseStream.Seek(SubsetBlockOffset, SeekOrigin.Begin);
-                        for (int i = 0; i < m_SubsetCount; i++)
-                        {
-                            m_Subsets[i].m_IndexCount = br.ReadUInt32();
-                            m_Subsets[i].m_VertexCount = br.ReadUInt32();
-                            m_Subsets[i].m_GeometryDataOffset = br.ReadUInt32();
-                            m_Subsets[i].m_IndexDataOffset = br.ReadUInt32();
-
-                            m_Subsets[i].m_GpuRegistryId = br.ReadUInt32();
-                            m_Subsets[i].m_Flags = br.ReadUInt16();
-                            m_Subsets[i].m_UVLogScale = br.ReadUInt16();
-                            m_Subsets[i].m_MetersPerUnit = br.ReadSingle();
-                            m_Subsets[i].m_MaterialIndex = br.ReadUInt16();
-                            m_Subsets[i].m_ZBiasI16 = br.ReadInt16();
-                    
-                            m_Subsets[i].m_SurfaceArea = br.ReadSingle();
-                            m_Subsets[i].m_UVArea = br.ReadSingle();
-                            m_Subsets[i].m_FadeOutDist = br.ReadSingle();
-                            m_Subsets[i].m_MaterialLodDist = br.ReadSingle();
-
-                            m_Subsets[i].m_ObjSpaceCenter = new IVec3
-                            {
-                                x = br.ReadUInt32(),
-                                y = br.ReadUInt32(),
-                                z = br.ReadUInt32()
-                            };
-                            m_Subsets[i].m_ObjSpaceExtent = br.ReadUInt32();
-                    
-                            m_Subsets[i].m_VertexStdOffset = br.ReadUInt32();
-                            m_Subsets[i].m_VertexUV12Offset = br.ReadUInt32();
-                            m_Subsets[i].m_VertexColorOffset = br.ReadUInt32();
-                            m_Subsets[i].m_VertexSkinOffset = br.ReadUInt32();
-                            m_Subsets[i].m_SkinClusterOffset = br.ReadUInt32();
-                            m_Subsets[i].m_CustomStreamIndex = br.ReadUInt32();
-
-                            m_Subsets[i].m_GeometryBuiltOffset = br.ReadUInt32();
-                            m_Subsets[i].m_GeometryBuiltSize = br.ReadUInt32();
-
-                            m_Subsets[i].m_AnimVertCount = br.ReadUInt32();
-                            m_Subsets[i].m_AnimVertClusterCount = br.ReadUInt16();
-                            m_Subsets[i].m_LodMask = br.ReadUInt16();
-                            m_Subsets[i].m_LGCaptureBehavior = br.ReadUInt32();
-                            m_Subsets[i].m_LodExtrusionScale = br.ReadSingle();
-                            m_Subsets[i].m_OriginJointNameHash = br.ReadUInt32();
-                            m_Subsets[i].m_SkipShadowBias = br.ReadByte();
-                            m_Subsets[i].m_PadA = br.ReadByte();
-                            m_Subsets[i].m_LongestEdgeLength = br.ReadUInt16();
-                            m_Subsets[i].m_CurvatureRadius = br.ReadSingle();
-                            m_Subsets[i].m_PadB = br.ReadUInt32();
-                        }
-
-                        var material = new MaterialBuilder("Test Material");
-
-                        var meshBuilder = new MeshBuilder<VertexPosition>("MeshTest");
-
-                        var mesh = meshBuilder.UsePrimitive(material);
-
-                        mesh.AddTriangle(new VertexPosition(0, 0, 0), new VertexPosition(1, 0, 0), new VertexPosition(0, 1, 0));
-                        mesh.AddTriangle(new VertexPosition(0, 1, 0), new VertexPosition(1, 0, 0), new VertexPosition(1, 1, 0));
-
-                        var scene = new SceneBuilder();
-
-                        scene.AddRigidMesh(meshBuilder, Matrix4x4.Identity);
-
-                        var model = scene.ToGltf2();
-
-                        model.SaveGLB("Output/model.glb");
-                    }
-                    else
-                    {
-                        throw new Exception("Model Subset block not found.");
-                    }
-                }
-                else
-                {
-                    throw new Exception("Model Joint Hierarchy block not found.");
-                }
-            }
-            else
+            };
+            jointBSpheres.m_BSpheres = new JointBSphereElem[jointBSpheres.m_BSphereCount];
+            for (int i = 0; i < jointBSpheres.m_BSphereCount; i++)
             {
-                throw new Exception("Model Built block not found.");
+                jointBSpheres.m_BSpheres[i].m_BSphere = new BSphere
+                {
+                    m_Center = new Vec3
+                    {
+                        x = br.ReadSingle(),
+                        y = br.ReadSingle(),
+                        z = br.ReadSingle()
+                    },
+                    m_Radius = br.ReadSingle()
+                };
+                jointBSpheres.m_BSpheres[i].m_Id = br.ReadUInt16();
+                jointBSpheres.m_BSpheres[i].m_Pad = br.ReadUInt16();
             }
+            joint_hierarchy.m_JointBSpheres = jointBSpheres;
+
+            JointMirrorId[] jointMirrorId = new JointMirrorId[joint_hierarchy.m_MirrorCount];
+            br.BaseStream.Seek(MirrorIdsBlockOffset, SeekOrigin.Begin);
+            for (int i = 0; i < joint_hierarchy.m_MirrorCount; i++)
+            {
+                jointMirrorId[i].m_IdA = br.ReadUInt16();
+                jointMirrorId[i].m_IdB = br.ReadUInt16();
+            }
+
+            joint_hierarchy.m_MirrorIds = jointMirrorId;
+
+            UInt16[] jointLeafIds = new UInt16[joint_hierarchy.m_LeafCount];
+            br.BaseStream.Seek(LeafIdsBlockOffset, SeekOrigin.Begin);
+            for (int i = 0; i < joint_hierarchy.m_LeafCount; i++)
+            {
+                jointLeafIds[i] = br.ReadUInt16();
+            }
+
+            joint_hierarchy.m_LeafIds = jointLeafIds;
+
+            int SubsetBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelSubsetHash);
+            if (SubsetBlockOffset == -1)
+                throw new Exception("Model Subset block not found.");
+
+            int m_SubsetCount = (int)(Utils.GetBlockById(blockHeaders, ModelHash.kModelSubsetHash).m_Size / 128);
+            ModelSubset[] m_Subsets = new ModelSubset[m_SubsetCount];
+            br.BaseStream.Seek(SubsetBlockOffset, SeekOrigin.Begin);
+            for (int i = 0; i < m_SubsetCount; i++)
+            {
+                m_Subsets[i].m_IndexCount = br.ReadUInt32();
+                m_Subsets[i].m_VertexCount = br.ReadUInt32();
+                m_Subsets[i].m_GeometryDataOffset = br.ReadUInt32();
+                m_Subsets[i].m_IndexDataOffset = br.ReadUInt32();
+
+                m_Subsets[i].m_GpuRegistryId = br.ReadUInt32();
+                m_Subsets[i].m_Flags = br.ReadUInt16();
+                m_Subsets[i].m_UVLogScale = br.ReadUInt16();
+                m_Subsets[i].m_MetersPerUnit = br.ReadSingle();
+                m_Subsets[i].m_MaterialIndex = br.ReadUInt16();
+                m_Subsets[i].m_ZBiasI16 = br.ReadInt16();
+
+                m_Subsets[i].m_SurfaceArea = br.ReadSingle();
+                m_Subsets[i].m_UVArea = br.ReadSingle();
+                m_Subsets[i].m_FadeOutDist = br.ReadSingle();
+                m_Subsets[i].m_MaterialLodDist = br.ReadSingle();
+
+                m_Subsets[i].m_ObjSpaceCenter = new IVec3
+                {
+                    x = br.ReadUInt32(),
+                    y = br.ReadUInt32(),
+                    z = br.ReadUInt32()
+                };
+                m_Subsets[i].m_ObjSpaceExtent = br.ReadUInt32();
+
+                m_Subsets[i].m_VertexStdOffset = br.ReadUInt32();
+                m_Subsets[i].m_VertexUV12Offset = br.ReadUInt32();
+                m_Subsets[i].m_VertexColorOffset = br.ReadUInt32();
+                m_Subsets[i].m_VertexSkinOffset = br.ReadUInt32();
+                m_Subsets[i].m_SkinClusterOffset = br.ReadUInt32();
+                m_Subsets[i].m_CustomStreamIndex = br.ReadUInt32();
+
+                m_Subsets[i].m_GeometryBuiltOffset = br.ReadUInt32();
+                m_Subsets[i].m_GeometryBuiltSize = br.ReadUInt32();
+
+                m_Subsets[i].m_AnimVertCount = br.ReadUInt32();
+                m_Subsets[i].m_AnimVertClusterCount = br.ReadUInt16();
+                m_Subsets[i].m_LodMask = br.ReadUInt16();
+                m_Subsets[i].m_LGCaptureBehavior = br.ReadUInt32();
+                m_Subsets[i].m_LodExtrusionScale = br.ReadSingle();
+                m_Subsets[i].m_OriginJointNameHash = br.ReadUInt32();
+                m_Subsets[i].m_SkipShadowBias = br.ReadByte();
+                m_Subsets[i].m_PadA = br.ReadByte();
+                m_Subsets[i].m_LongestEdgeLength = br.ReadUInt16();
+                m_Subsets[i].m_CurvatureRadius = br.ReadSingle();
+                m_Subsets[i].m_PadB = br.ReadUInt32();
+            }
+
+            int MaterialBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelMaterialHash);
+            if (MaterialBlockOffset == -1)
+                throw new Exception("Model Material block not found.");
+
+            br.BaseStream.Seek(MaterialBlockOffset, SeekOrigin.Begin);
+            var m_MaterialCount = (Utils.GetBlockById(blockHeaders, ModelHash.kModelMaterialHash).m_Size / 32);
+            ModelMaterialInfo[] MaterialInfoArray = new ModelMaterialInfo[m_MaterialCount];
+            List<string> materialPaths = new List<string>();
+            List<string> materialSlots = new List<string>();
+            for (int i = 0; i < m_MaterialCount; i++)
+            {
+                MaterialInfoArray[i].m_AssetNameOffset = br.ReadUInt32();
+                MaterialInfoArray[i].m_Pad1 = br.ReadUInt32();
+                MaterialInfoArray[i].m_MaterialMappingNameOffset = br.ReadUInt32();
+                MaterialInfoArray[i].m_Pad2 = br.ReadUInt32();
+            }
+            for (int i = 0; i < m_MaterialCount; i++)
+            {
+                br.BaseStream.Seek(MaterialInfoArray[i].m_AssetNameOffset, SeekOrigin.Begin);
+                materialPaths.Add(Utils.ReadNullTermString(br));
+                Console.WriteLine(materialPaths[i]);
+            }
+            for (int i = 0; i < m_MaterialCount; i++)
+            {
+                br.BaseStream.Seek(MaterialInfoArray[i].m_MaterialMappingNameOffset, SeekOrigin.Begin);
+                materialSlots.Add(Utils.ReadNullTermString(br));
+                Console.WriteLine(materialSlots[i]);
+            }
+
+            int AnimVertInfoBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelAnimVertInfo2Hash);
+            if(AnimVertInfoBlockOffset == -1)
+                throw new Exception("Models without skinning not supported.");
+
+            br.BaseStream.Seek(AnimVertInfoBlockOffset, SeekOrigin.Begin);
+            AnimVertInfo2 AnimVertInfo = new AnimVertInfo2
+            {
+                m_MorphInfoPointer = br.ReadUInt64(),
+                m_GeomInfoPointer = br.ReadUInt64(),
+                m_GeomMeshInfoPointer = br.ReadUInt64(),
+                m_ZivaInfoPointer = br.ReadUInt64(),
+                m_SmoothInfoPointer = br.ReadUInt64()
+            };
+
+            int AnimZiva2InfoBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelAnimZiva2InfoHash);
+            if (AnimZiva2InfoBlockOffset == -1)
+                throw new Exception("Model Anim Ziva2 Info block not found.");
+
+            AnimZiva2Info animZiva2Info = new AnimZiva2Info
+            {
+                m_Flags = br.ReadByte(),
+                m_LodLevel = br.ReadByte(),
+                m_ElemCount = br.ReadByte(),
+                m_Pad = br.ReadByte(),
+                m_SliderCount = br.ReadUInt16(),
+                m_SliderMorphCount = br.ReadUInt16(),
+                m_JointCountTotal = br.ReadUInt16(),
+                m_GpuStageCount = br.ReadByte(),
+                m_GpuBufferCount = br.ReadByte(),
+                m_LodBlendOutFactor = br.ReadSingle(),
+                m_VertCountMax = br.ReadUInt32(),
+                m_VertLookupCount = br.ReadUInt32(),
+                m_Elems = br.ReadUInt64(),
+                m_JointLookup = br.ReadUInt64(),
+                m_Sliders = br.ReadUInt64(),
+                m_SliderLookup = br.ReadUInt64(),
+                m_SubsetElems = br.ReadUInt64(),
+                m_VertLookup = br.ReadUInt64(),
+                m_ZivaBuffersGpu = br.ReadUInt64(),
+                m_GpuStages = br.ReadUInt64(),
+                m_VertLookupBufferGpu = new AnimRenderBuffer
+                {
+                    m_Format = br.ReadUInt32(),
+                    m_ElemSize = br.ReadUInt32(),
+                    m_ElemCount = br.ReadUInt32(),
+                    m_Initialized = br.ReadUInt32(),
+                    m_DataPointer = br.ReadUInt64(),
+                    m_SRVPointer = br.ReadUInt64(),
+                    m_UAVPointer = br.ReadUInt64(),
+                    m_OwnerNamePointer = br.ReadUInt64()
+                }
+            };
+
+
+
+
+
+
+            //Write to Mesh
+            var scene = new SceneBuilder();
+
+            for (int isubset = 0; isubset < m_SubsetCount; isubset++)
+            {
+                if (m_Subsets[isubset].m_LodMask != 1)
+                    continue;
+
+                var subset = m_Subsets[isubset];
+                var vertices = new ModelStdVertex[subset.m_VertexCount];
+                var indices = new Index[subset.m_IndexCount / 3];
+
+                int subsetGeomOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelSubsetGeomDataHash);
+                if (subsetGeomOffset == -1)
+                    throw new Exception("Subset Geometry Data not found.");
+
+                br.BaseStream.Seek(subsetGeomOffset + subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_VertexStdOffset, SeekOrigin.Begin);
+                for (int v = 0; v < subset.m_VertexCount; v++)
+                {
+                    vertices[v].m_Position_X = br.ReadInt16();
+                    vertices[v].m_Position_Y = br.ReadInt16();
+                    vertices[v].m_Position_Z = br.ReadInt16();
+                    vertices[v].m_Position_W = br.ReadInt16();
+                    vertices[v].m_NormalTangent = br.ReadInt32();
+                    vertices[v].m_UV0_U = br.ReadInt16();
+                    vertices[v].m_UV0_V = br.ReadInt16();
+                }
+
+                br.BaseStream.Seek(subsetGeomOffset + subset.m_GeometryBuiltOffset + subset.m_IndexDataOffset, SeekOrigin.Begin);
+                for (int i = 0; i < subset.m_IndexCount / 3; i++)
+                {
+                    indices[i].m_VertexA = br.ReadUInt16();
+                    indices[i].m_VertexB = br.ReadUInt16();
+                    indices[i].m_VertexC = br.ReadUInt16();
+                }
+
+                var material = new MaterialBuilder(materialSlots[m_Subsets[isubset].m_MaterialIndex]);
+                var meshBuilder = new MeshBuilder<VertexPositionNormal, VertexTexture1>($"{isubset}_{m_ModelName}");
+                var mesh = meshBuilder.UsePrimitive(material);
+
+                int vertexCount = vertices.Length;
+                Vector3[] normals = new Vector3[vertexCount];
+                Vector2[] uv0 = new Vector2[vertexCount];
+                Vector2[] uv1 = new Vector2[vertexCount];
+
+                for (int j = 0; j < vertexCount; j++)
+                {
+                    normals[j] = Utils.DecodeNormal(vertices[j]);
+                    uv0[j] = new Vector2(vertices[j].m_UV0_U * (1 / 16384.0f), vertices[j].m_UV0_V * (1 / 16384.0f));
+                }
+
+                for (int i = 0; i < (subset.m_IndexCount / 3); i++)
+                {
+                    int ia = indices[i].m_VertexA;
+                    int ib = indices[i].m_VertexB;
+                    int ic = indices[i].m_VertexC;
+
+                    VertexPositionNormal p0 = new VertexPositionNormal(new Vector3(vertices[ia].m_Position_X, vertices[ia].m_Position_Y, vertices[ia].m_Position_Z) * subset.m_MetersPerUnit, normals[ia]);
+                    VertexPositionNormal p1 = new VertexPositionNormal(new Vector3(vertices[ib].m_Position_X, vertices[ib].m_Position_Y, vertices[ib].m_Position_Z) * subset.m_MetersPerUnit, normals[ib]);
+                    VertexPositionNormal p2 = new VertexPositionNormal(new Vector3(vertices[ic].m_Position_X, vertices[ic].m_Position_Y, vertices[ic].m_Position_Z) * subset.m_MetersPerUnit, normals[ic]);
+
+                    VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p0, uv0[ia]);
+                    VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p1, uv0[ib]);
+                    VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p2, uv0[ic]);
+
+                    mesh.AddTriangle(vert1, vert2, vert3);
+                }
+
+                scene.AddRigidMesh(meshBuilder, Matrix4x4.Identity);
+            }
+            var model = scene.ToGltf2();
+
+            model.SaveGLB($"Output/{m_ModelName}.glb");
         }
     }
 
@@ -979,11 +1224,9 @@ namespace ModelExporter
 
         static void Main(string[] args)
         {
-            FileStream hero_spiderman_advanced = File.Open(@"C:\Users\27alexander.smith_ca\Desktop\Personal\DAT1\DAT1\GameFiles\hero_spiderman_advanced.model", FileMode.Open);
-            FileStream hero_spiderman_blacksuit = File.Open(@"D:\hero_spiderman_blacksuit.model", FileMode.Open);
-            FileStream hero_spiderman_arachknight = File.Open(@"D:\hero_spiderman_arachknight.model", FileMode.Open);
+            FileStream AssetPath = File.Open(@"C:\Users\27alexander.smith_ca\Desktop\Personal\DAT1\DAT1\GameFiles\hero_spiderman_advanced.model", FileMode.Open);
 
-            new Model(new BinaryReader(hero_spiderman_advanced));
+            new Model(AssetPath);
         }
     }
 }
