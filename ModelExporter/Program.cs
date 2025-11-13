@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SharpGLTF.Geometry;
+using SharpGLTF.Transforms;
 using SharpGLTF.Geometry.VertexTypes;
 using SharpGLTF.Materials;
 using SharpGLTF.Scenes;
@@ -9,6 +10,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using static ModelExporter.Model;
+using System.Runtime.InteropServices;
+using System.Linq;
+using SharpGLTF.Schema2;
 
 namespace ModelExporter
 {
@@ -289,6 +293,58 @@ namespace ModelExporter
     }
     public class Model
     {
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct ModelSkinCluster
+    {
+        private uint _flags; // Make the backing field 'readonly' if desired for absolute immutability
+
+        // Public constructor to set the initial raw 32-bit value upon creation
+        public ModelSkinCluster(uint rawValue)
+        {
+            _flags = rawValue;
+        }
+
+        // Public read-only property for the raw flags value (optional)
+        public uint RawFlags => _flags;
+
+        // All the bit-specific properties only need 'get' accessors:
+
+        // 20 bits (0-19)
+        public uint m_SkinDataOffset4 => _flags & 0x000FFFFFU;
+
+        // 1 bit (bit 20)
+        public uint m_16BitIndices => (_flags >> 20) & 0x1U;
+
+        // 4 bits (bits 21-24)
+        public uint m_InfluenceCountMinus1 => (_flags >> 21) & 0xFU;
+
+        // 4 bits (bits 25-28)
+        public uint m_JointOffset256 => (_flags >> 25) & 0xFU;
+
+        // 1 bit (bit 29)
+        public uint m_IsAnimVert => (_flags >> 29) & 0x1U;
+
+        // 2 bits (bits 30-31)
+        public uint m_Unused => (_flags >> 30) & 0x3U;
+    }
+
+
+    enum SubsetDataSizes
+        {
+            // The maximum number of joint influences
+            kModelSkinJointInfluenceMax = 12,
+
+            // This many consecutive verts use the same number of joint influences.
+            kModelSkinVertClusterSize = 32,
+
+            // The maximum number of morph subsets / targets
+            kModelMorphSubsetMax = 255,
+            kModelMorphTargetMax = 2048,
+
+            // The maximum number of verts in an anim vert batch
+            kModelAnimVertBatchMax = 2560,
+        };
+
         public struct ModelStdVertex
         {
             public Int16 m_Position_X;
@@ -831,9 +887,7 @@ namespace ModelExporter
             int SplineRadiiBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelSplineRadiiHash);
 
             if (BindPoseBlockOffset == -1 || JointLookupBlockOffset == -1)
-            {
                 throw new Exception("Essential Joint Hierarchy Blocks not found.");
-            }
 
             br.BaseStream.Seek(JointHierarchyOffset, SeekOrigin.Begin);
 
@@ -1078,16 +1132,12 @@ namespace ModelExporter
             {
                 br.BaseStream.Seek(MaterialInfoArray[i].m_AssetNameOffset, SeekOrigin.Begin);
                 materialPaths.Add(Utils.ReadNullTermString(br));
-                Console.WriteLine(materialPaths[i]);
             }
             for (int i = 0; i < m_MaterialCount; i++)
             {
                 br.BaseStream.Seek(MaterialInfoArray[i].m_MaterialMappingNameOffset, SeekOrigin.Begin);
                 materialSlots.Add(Utils.ReadNullTermString(br));
-                Console.WriteLine(materialSlots[i]);
             }
-
-
 
             int AnimVertInfoBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelAnimVertInfo2Hash);
             if (AnimVertInfoBlockOffset == -1)
@@ -1102,7 +1152,6 @@ namespace ModelExporter
                 m_ZivaInfoPointer = br.ReadUInt64(),
                 m_SmoothInfoPointer = br.ReadUInt64()
             };
-
             int AnimZiva2InfoBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelAnimZiva2InfoHash);
             if (AnimZiva2InfoBlockOffset == -1)
                 throw new Exception("Model Anim Ziva2 Info block not found.");
@@ -1141,10 +1190,6 @@ namespace ModelExporter
                     m_OwnerNamePointer = br.ReadUInt64()
                 }
             };
-
-
-
-
 
 
             //Write to Mesh
@@ -1201,6 +1246,117 @@ namespace ModelExporter
                     uv1[i] = new Vector2(br.ReadInt16() * (1 / 16384.0f), br.ReadInt16() * (1 / 16384.0f));
                 }
 
+                //Joints
+                var boneNodes = new NodeBuilder[joint_hierarchy.m_JointCount];
+                for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+                {
+                    var pose = joint_hierarchy.m_JointLocalBindPoses[i];
+                    var translation = new Vector3(pose.m_t.x, pose.m_t.y, pose.m_t.z) * model_built.m_CommonMetersPerUnit;
+                    var rotation = new Quaternion(pose.m_q.x, pose.m_q.y, pose.m_q.z, pose.m_q.w);
+                    var scale = new Vector3(pose.m_s.x, pose.m_s.y, pose.m_s.z);
+
+                    boneNodes[i] = new NodeBuilder(boneNames[i]);
+                    boneNodes[i].WithLocalTranslation(translation);
+                    boneNodes[i].WithLocalRotation(rotation);
+                    boneNodes[i].WithLocalScale(scale);
+                }
+
+                for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+                {
+                    int parentIndex = joint_hierarchy.m_Joints[i].m_ParentIndex;
+                    if(parentIndex >= 0 && parentIndex < joint_hierarchy.m_JointCount)
+                    {
+                        boneNodes[parentIndex].AddNode(boneNodes[i]);
+                    }
+                }
+
+                var invBindMatrices = new Matrix4x4[joint_hierarchy.m_JointCount];
+                for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+                {
+                    var inv = joint_hierarchy.m_JointInvBindMats[i];
+                    invBindMatrices[i] = new Matrix4x4(
+                        inv.x.x, inv.x.y, inv.x.z, 0,
+                        inv.y.x, inv.y.y, inv.y.z, 0,
+                        inv.z.x, inv.z.y, inv.z.z, 0,
+                        inv.w.x, inv.w.y, inv.w.z, 1
+                    );  
+                }
+
+
+                //Weights
+                br.BaseStream.Seek(subsetGeomOffset + subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_SkinClusterOffset, SeekOrigin.Begin);
+                var clusters = new List<ModelSkinCluster>();
+                for (int i = 0; i < subset.m_AnimVertClusterCount; i++)
+                {
+                    clusters.Add(new ModelSkinCluster(br.ReadUInt32()));
+                }
+
+                var SkinDataOffset = subsetGeomOffset + subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_VertexSkinOffset;
+                br.BaseStream.Seek(SkinDataOffset, SeekOrigin.Begin);
+                byte[] subsetSkinData = br.ReadBytes((int)(Utils.GetBlockById(blockHeaders, ModelHash.kModelSubsetGeomDataHash).m_Size - SkinDataOffset));
+
+                var jointIndicesPerVertex = new List<int[]>((int)subset.m_VertexCount);
+                var jointWeightsPerVertex = new List<float[]>((int)subset.m_VertexCount);
+                for (int i = 0; i < subset.m_VertexCount; i++)
+                {
+                    jointIndicesPerVertex.Add(new int[(int)SubsetDataSizes.kModelSkinJointInfluenceMax]);
+                    jointWeightsPerVertex.Add(new float[(int)SubsetDataSizes.kModelSkinJointInfluenceMax]);
+                }
+
+                foreach (var cluster in clusters)
+                {
+                    bool is16 = (cluster.m_16BitIndices == 1) ? true : false;
+                    int jointOffset = (int)cluster.m_JointOffset256 * 256;
+                    int jointCount = (int)cluster.m_InfluenceCountMinus1 + 1;
+                    int bytesPerVertex = jointCount * (is16 ? 2 : 1) + (jointCount == 1 ? 0 : 1);
+
+                    int clusterVertexStart = clusters.IndexOf(cluster) * (int)SubsetDataSizes.kModelSkinVertClusterSize;
+                    int clusterVertexCount = Math.Min((int)SubsetDataSizes.kModelSkinVertClusterSize, (int)subset.m_VertexCount - clusterVertexStart);
+
+                    int clusterDataOffset = (int)(cluster.m_SkinDataOffset4 * 4);
+                    int cursor = clusterDataOffset;
+
+                    for (int i = 0; i < clusterVertexCount; i++)
+                    {
+                        int[] jointIndices = new int[(int)SubsetDataSizes.kModelSkinJointInfluenceMax];
+                        float[] jointWeights = new float[(int)SubsetDataSizes.kModelSkinJointInfluenceMax];
+
+                        int joint = jointOffset;
+                        for (int j = 0; j < jointCount; j++)
+                        {
+                            float weight = 1.0f;
+                            if(is16)
+                            {
+                                joint = subsetSkinData[cursor] | (subsetSkinData[cursor + 1] << 8);
+                                cursor += 2;
+                            }
+                            else
+                            {
+                                joint += subsetSkinData[cursor++];
+                            }
+
+                            if(jointCount > 1)
+                            {
+                                weight = subsetSkinData[cursor++] * (1.0f / 255.0f);
+                            }
+
+                            jointIndices[j] = joint;
+                            jointWeights[j] = weight;
+                        }
+
+                        float totalWeight = jointWeights.Take(jointCount).Sum();
+                        if(totalWeight > 0)
+                        {
+                            for (int j = 0; j < jointCount; j++)
+                                jointWeights[j] /= totalWeight;
+                        }
+
+                        jointIndicesPerVertex[clusterVertexStart + i] = jointIndices;
+                        jointWeightsPerVertex[clusterVertexStart + i] = jointIndices;
+                    }
+                }
+
+
                 for (int j = 0; j < vertexCount; j++)
                 {
                     normals[j] = Utils.DecodeNormal(vertices[j]);
@@ -1237,16 +1393,21 @@ namespace ModelExporter
 
                 if (subset.m_VertexUV12Offset == 0)
                 {
-                    scene.AddRigidMesh(meshBuilder, Matrix4x4.Identity);
+                    scene.AddRigidMesh(meshBuilder, AffineTransform.Identity);
                 }
                 else
                 {
-                    scene.AddRigidMesh(meshBuilderUV1, Matrix4x4.Identity);
+                    scene.AddRigidMesh(meshBuilderUV1, AffineTransform.Identity);
                 }
             }
             var model = scene.ToGltf2();
 
-            model.SaveGLB($"Output/{m_ModelName}.glb");
+            if(!Directory.Exists("Exported"))
+            {
+                Directory.CreateDirectory("Exported");
+            }
+            model.SaveGLB($"Exported/{m_ModelName}.glb");
+            Console.WriteLine($"Exported to \"Exported/{m_ModelName}.glb\"");
         }
     }
 
@@ -1254,7 +1415,14 @@ namespace ModelExporter
     {
         static void Main(string[] args)
         {
-            FileStream AssetPath = File.Open(@"D:\hero_spiderman_miles_updated.model", FileMode.Open);
+            //if(args.Length < 1)
+            //{
+            //    Console.WriteLine("Usage: ModelExporter.exe <path to model asset>");
+            //    return;
+            //}
+            //FileStream AssetPath = File.Open(args[0], FileMode.Open);
+
+            FileStream AssetPath = File.Open(@"D:\hero_spiderman_advanced.model", FileMode.Open);
 
             new Model(AssetPath);
         }
