@@ -1056,6 +1056,8 @@ namespace ModelExporter
                 m_Subsets[i].m_PadB = br.ReadUInt32();
             }
 
+
+            //Materials
             int MaterialBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelMaterialHash);
             if (MaterialBlockOffset == -1)
                 throw new Exception("Model Material block not found.");
@@ -1084,6 +1086,8 @@ namespace ModelExporter
                 materialSlots.Add(Utils.ReadNullTermString(br));
                 Console.WriteLine(materialSlots[i]);
             }
+
+
 
             int AnimVertInfoBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelAnimVertInfo2Hash);
             if (AnimVertInfoBlockOffset == -1)
@@ -1181,18 +1185,29 @@ namespace ModelExporter
 
                 var material = new MaterialBuilder(materialSlots[m_Subsets[isubset].m_MaterialIndex]);
                 var meshBuilder = new MeshBuilder<VertexPositionNormal, VertexTexture1>($"{isubset}_{m_ModelName}");
+                var meshBuilderUV1 = new MeshBuilder<VertexPositionNormal, VertexTexture2>($"{isubset}_{m_ModelName}");
                 var mesh = meshBuilder.UsePrimitive(material);
+                var meshUV1 = meshBuilderUV1.UsePrimitive(material);
 
                 int vertexCount = vertices.Length;
                 Vector3[] normals = new Vector3[vertexCount];
                 Vector2[] uv0 = new Vector2[vertexCount];
                 Vector2[] uv1 = new Vector2[vertexCount];
+                VertexTexture2[] UVs = new VertexTexture2[vertexCount];
+
+                br.BaseStream.Seek(subsetGeomOffset + subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_VertexUV12Offset, SeekOrigin.Begin);
+                for (int i = 0; i < vertexCount; i++)
+                {
+                    uv1[i] = new Vector2(br.ReadInt16() * (1 / 16384.0f), br.ReadInt16() * (1 / 16384.0f));
+                }
 
                 for (int j = 0; j < vertexCount; j++)
                 {
                     normals[j] = Utils.DecodeNormal(vertices[j]);
                     uv0[j] = new Vector2(vertices[j].m_UV0_U * (1 / 16384.0f), vertices[j].m_UV0_V * (1 / 16384.0f));
+                    UVs[j] = new VertexTexture2(uv0[j], uv1[j]);
                 }
+
 
                 for (int i = 0; i < (subset.m_IndexCount / 3); i++)
                 {
@@ -1204,14 +1219,30 @@ namespace ModelExporter
                     VertexPositionNormal p1 = new VertexPositionNormal(new Vector3(vertices[ib].m_Position_X, vertices[ib].m_Position_Y, vertices[ib].m_Position_Z) * subset.m_MetersPerUnit, normals[ib]);
                     VertexPositionNormal p2 = new VertexPositionNormal(new Vector3(vertices[ic].m_Position_X, vertices[ic].m_Position_Y, vertices[ic].m_Position_Z) * subset.m_MetersPerUnit, normals[ic]);
 
-                    VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p0, uv0[ia]);
-                    VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p1, uv0[ib]);
-                    VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p2, uv0[ic]);
-
-                    mesh.AddTriangle(vert1, vert2, vert3);
+                    if(subset.m_VertexUV12Offset == 0)
+                    {
+                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p0, uv0[ia]);
+                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p1, uv0[ib]);
+                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p2, uv0[ic]);
+                        mesh.AddTriangle(vert1, vert2, vert3);
+                    }
+                    else
+                    {
+                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty>(p0, UVs[ia]);
+                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty>(p1, UVs[ib]);
+                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty>(p2, UVs[ic]);
+                        meshUV1.AddTriangle(vert1, vert2, vert3);
+                    }
                 }
 
-                scene.AddRigidMesh(meshBuilder, Matrix4x4.Identity);
+                if (subset.m_VertexUV12Offset == 0)
+                {
+                    scene.AddRigidMesh(meshBuilder, Matrix4x4.Identity);
+                }
+                else
+                {
+                    scene.AddRigidMesh(meshBuilderUV1, Matrix4x4.Identity);
+                }
             }
             var model = scene.ToGltf2();
 
@@ -1221,10 +1252,9 @@ namespace ModelExporter
 
     internal class Program
     {
-
         static void Main(string[] args)
         {
-            FileStream AssetPath = File.Open(@"C:\Users\27alexander.smith_ca\Desktop\Personal\DAT1\DAT1\GameFiles\hero_spiderman_advanced.model", FileMode.Open);
+            FileStream AssetPath = File.Open(@"D:\hero_spiderman_miles_updated.model", FileMode.Open);
 
             new Model(AssetPath);
         }
