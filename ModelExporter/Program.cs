@@ -1195,10 +1195,80 @@ namespace ModelExporter
             //Write to Mesh
             var scene = new SceneBuilder();
 
+            
+            NodeBuilder[] boneNodes = new NodeBuilder[joint_hierarchy.m_JointCount];
+
+            // Create nodes
+            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            {
+                var pose = joint_hierarchy.m_JointLocalBindPoses[i];
+
+                var translation = new Vector3(
+                    pose.m_t.x,
+                    pose.m_t.y,
+                    pose.m_t.z
+                ) * model_built.m_CommonMetersPerUnit;
+
+                var rotation = new Quaternion(
+                    pose.m_q.x,
+                    pose.m_q.y,
+                    pose.m_q.z,
+                    pose.m_q.w
+                );
+
+                var scale = new Vector3(
+                    pose.m_s.x,
+                    pose.m_s.y,
+                    pose.m_s.z
+                );
+
+                boneNodes[i] = new NodeBuilder(boneNames[i])
+                    .WithLocalTranslation(translation)
+                    .WithLocalRotation(rotation)
+                    .WithLocalScale(scale);
+            }
+
+            // Link hierarchy (build tree)
+            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            {
+                int parentIndex = joint_hierarchy.m_Joints[i].m_ParentIndex;
+
+                if (parentIndex >= 0 && parentIndex < joint_hierarchy.m_JointCount)
+                    boneNodes[parentIndex].AddNode(boneNodes[i]);
+            }
+
+
+            Matrix4x4[] invBindMatrices = new Matrix4x4[joint_hierarchy.m_JointCount];
+
+            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            {
+                var inv = joint_hierarchy.m_JointInvBindMats[i];
+
+                invBindMatrices[i] = new Matrix4x4(
+                    inv.x.x, inv.x.y, inv.x.z, 0,
+                    inv.y.x, inv.y.y, inv.y.z, 0,
+                    inv.z.x, inv.z.y, inv.z.z, 0,
+                    inv.w.x, inv.w.y, inv.w.z, 1
+                );
+            }
+
+            
+            var skinJoints = new (NodeBuilder Joint, Matrix4x4 InverseBindMatrix)[boneNodes.Length];
+
+            for (int i = 0; i < boneNodes.Length; i++)
+            {
+                skinJoints[i] = (boneNodes[i], invBindMatrices[i]);
+            }
+
+
+
+
             for (int isubset = 0; isubset < m_SubsetCount; isubset++)
             {
                 if (m_Subsets[isubset].m_LodMask != 1)
                     continue;
+
+                Console.WriteLine($"Subset {isubset}");
 
                 var subset = m_Subsets[isubset];
                 var vertices = new ModelStdVertex[subset.m_VertexCount];
@@ -1246,43 +1316,6 @@ namespace ModelExporter
                     uv1[i] = new Vector2(br.ReadInt16() * (1 / 16384.0f), br.ReadInt16() * (1 / 16384.0f));
                 }
 
-                //Joints
-                var boneNodes = new NodeBuilder[joint_hierarchy.m_JointCount];
-                for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
-                {
-                    var pose = joint_hierarchy.m_JointLocalBindPoses[i];
-                    var translation = new Vector3(pose.m_t.x, pose.m_t.y, pose.m_t.z) * model_built.m_CommonMetersPerUnit;
-                    var rotation = new Quaternion(pose.m_q.x, pose.m_q.y, pose.m_q.z, pose.m_q.w);
-                    var scale = new Vector3(pose.m_s.x, pose.m_s.y, pose.m_s.z);
-
-                    boneNodes[i] = new NodeBuilder(boneNames[i]);
-                    boneNodes[i].WithLocalTranslation(translation);
-                    boneNodes[i].WithLocalRotation(rotation);
-                    boneNodes[i].WithLocalScale(scale);
-                }
-
-                for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
-                {
-                    int parentIndex = joint_hierarchy.m_Joints[i].m_ParentIndex;
-                    if(parentIndex >= 0 && parentIndex < joint_hierarchy.m_JointCount)
-                    {
-                        boneNodes[parentIndex].AddNode(boneNodes[i]);
-                    }
-                }
-
-                var invBindMatrices = new Matrix4x4[joint_hierarchy.m_JointCount];
-                for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
-                {
-                    var inv = joint_hierarchy.m_JointInvBindMats[i];
-                    invBindMatrices[i] = new Matrix4x4(
-                        inv.x.x, inv.x.y, inv.x.z, 0,
-                        inv.y.x, inv.y.y, inv.y.z, 0,
-                        inv.z.x, inv.z.y, inv.z.z, 0,
-                        inv.w.x, inv.w.y, inv.w.z, 1
-                    );  
-                }
-
-
                 //Weights
                 br.BaseStream.Seek(subsetGeomOffset + subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_SkinClusterOffset, SeekOrigin.Begin);
                 var clusters = new List<ModelSkinCluster>();
@@ -1291,8 +1324,8 @@ namespace ModelExporter
                     clusters.Add(new ModelSkinCluster(br.ReadUInt32()));
                 }
 
-                var SkinDataOffset = subsetGeomOffset + subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_VertexSkinOffset;
-                br.BaseStream.Seek(SkinDataOffset, SeekOrigin.Begin);
+                var SkinDataOffset = subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_VertexSkinOffset;
+                br.BaseStream.Seek(subsetGeomOffset + SkinDataOffset, SeekOrigin.Begin);
                 byte[] subsetSkinData = br.ReadBytes((int)(Utils.GetBlockById(blockHeaders, ModelHash.kModelSubsetGeomDataHash).m_Size - SkinDataOffset));
 
                 var jointIndicesPerVertex = new List<int[]>((int)subset.m_VertexCount);
@@ -1325,7 +1358,7 @@ namespace ModelExporter
                         for (int j = 0; j < jointCount; j++)
                         {
                             float weight = 1.0f;
-                            if(is16)
+                            if (is16)
                             {
                                 joint = subsetSkinData[cursor] | (subsetSkinData[cursor + 1] << 8);
                                 cursor += 2;
@@ -1335,7 +1368,7 @@ namespace ModelExporter
                                 joint += subsetSkinData[cursor++];
                             }
 
-                            if(jointCount > 1)
+                            if (jointCount > 1)
                             {
                                 weight = subsetSkinData[cursor++] * (1.0f / 255.0f);
                             }
@@ -1345,14 +1378,14 @@ namespace ModelExporter
                         }
 
                         float totalWeight = jointWeights.Take(jointCount).Sum();
-                        if(totalWeight > 0)
+                        if (totalWeight > 0)
                         {
                             for (int j = 0; j < jointCount; j++)
                                 jointWeights[j] /= totalWeight;
                         }
 
                         jointIndicesPerVertex[clusterVertexStart + i] = jointIndices;
-                        jointWeightsPerVertex[clusterVertexStart + i] = jointIndices;
+                        jointWeightsPerVertex[clusterVertexStart + i] = jointWeights;
                     }
                 }
 
@@ -1364,9 +1397,27 @@ namespace ModelExporter
                     UVs[j] = new VertexTexture2(uv0[j], uv1[j]);
                 }
 
+                //var skinJoints = new (NodeBuilder Joint, Matrix4x4 InverseBindMatrix)[boneNodes.Length];
+
+                //for (int i = 0; i < boneNodes.Length; i++)
+                //{
+                //    skinJoints[i] = (boneNodes[i], invBindMatrices[i]);
+                //}
+
+                VertexJoints4[] skinVerts = new VertexJoints4[subset.m_VertexCount];
+
+                for (int v = 0; v < subset.m_VertexCount; v++)
+                {
+                    var joints = jointIndicesPerVertex[v];
+                    var weights = jointWeightsPerVertex[v];
+
+                    skinVerts[v] = new VertexJoints4((joints[0], weights[0]), (joints[1], weights[1]), (joints[2], weights[2]), (joints[3], weights[3]));
+                }
+
 
                 for (int i = 0; i < (subset.m_IndexCount / 3); i++)
                 {
+                    //Console.WriteLine($"Index {i}");
                     int ia = indices[i].m_VertexA;
                     int ib = indices[i].m_VertexB;
                     int ic = indices[i].m_VertexC;
@@ -1375,29 +1426,37 @@ namespace ModelExporter
                     VertexPositionNormal p1 = new VertexPositionNormal(new Vector3(vertices[ib].m_Position_X, vertices[ib].m_Position_Y, vertices[ib].m_Position_Z) * subset.m_MetersPerUnit, normals[ib]);
                     VertexPositionNormal p2 = new VertexPositionNormal(new Vector3(vertices[ic].m_Position_X, vertices[ic].m_Position_Y, vertices[ic].m_Position_Z) * subset.m_MetersPerUnit, normals[ic]);
 
-                    if(subset.m_VertexUV12Offset == 0)
+                    var vA = ia;
+                    var vB = ib;
+                    var vC = ic;
+
+                    var jA = skinVerts[vA];
+                    var jB = skinVerts[vB];
+                    var jC = skinVerts[vC];
+
+                    if (subset.m_VertexUV12Offset == 0)
                     {
-                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p0, uv0[ia]);
-                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p1, uv0[ib]);
-                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexEmpty>(p2, uv0[ic]);
+                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>(p0, uv0[ia], jA);
+                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>(p1, uv0[ib], jB);
+                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>(p2, uv0[ic], jC);
                         mesh.AddTriangle(vert1, vert2, vert3);
                     }
                     else
                     {
-                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty>(p0, UVs[ia]);
-                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty>(p1, UVs[ib]);
-                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexEmpty>(p2, UVs[ic]);
+                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>(p0, UVs[ia], jA);
+                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>(p1, UVs[ib], jB);
+                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>(p2, UVs[ic], jC);
                         meshUV1.AddTriangle(vert1, vert2, vert3);
                     }
                 }
 
                 if (subset.m_VertexUV12Offset == 0)
                 {
-                    scene.AddRigidMesh(meshBuilder, AffineTransform.Identity);
+                    scene.AddSkinnedMesh(meshBuilder, skinJoints);
                 }
                 else
                 {
-                    scene.AddRigidMesh(meshBuilderUV1, AffineTransform.Identity);
+                    scene.AddSkinnedMesh(meshBuilderUV1, skinJoints);
                 }
             }
             var model = scene.ToGltf2();
