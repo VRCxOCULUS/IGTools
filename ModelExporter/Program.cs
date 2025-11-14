@@ -1,18 +1,17 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SharpGLTF.Geometry;
-using SharpGLTF.Transforms;
 using SharpGLTF.Geometry.VertexTypes;
 using SharpGLTF.Materials;
 using SharpGLTF.Scenes;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Numerics;
-using static ModelExporter.Model;
-using System.Runtime.InteropServices;
 using System.Linq;
-using SharpGLTF.Schema2;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using static ModelExporter.Model;
 
 namespace ModelExporter
 {
@@ -816,10 +815,8 @@ namespace ModelExporter
                 blockHeaders[i].m_Size = br.ReadUInt32();
             }
 
-
             int BuiltOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelBuiltHash);
-            if (BuiltOffset == -1)
-                throw new Exception("Model Built block not found.");
+            if (BuiltOffset == -1) throw new Exception("Model Built block not found.");
 
             br.BaseStream.Seek(BuiltOffset, SeekOrigin.Begin);
             ModelBuilt model_built = new ModelBuilt()
@@ -865,17 +862,15 @@ namespace ModelExporter
 
                 m_Pad = new uint[4]
                 {
-                        br.ReadUInt32(),
-                        br.ReadUInt32(),
-                        br.ReadUInt32(),
-                        br.ReadUInt32()
+            br.ReadUInt32(),
+            br.ReadUInt32(),
+            br.ReadUInt32(),
+            br.ReadUInt32()
                 }
             };
 
-
             int JointHierarchyOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointHierarchyHash);
-            if (JointHierarchyOffset == -1)
-                throw new Exception("Model Joint Hierarchy block not found.");
+            if (JointHierarchyOffset == -1) throw new Exception("Model Joint Hierarchy block not found.");
 
             int JointBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointHash);
             int JointLookupBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelJointLookupHash);
@@ -908,9 +903,7 @@ namespace ModelExporter
                 m_JointCount = joint_hierarchy_built.m_JointCount,
                 m_MirrorCount = joint_hierarchy_built.m_MirrorCount,
                 m_LeafCount = joint_hierarchy_built.m_LeafCount,
-
                 m_AnimSplineMeshRadius = (UInt64)(SplineRadiiBlockOffset == -1 ? 0 : SplineRadiiBlockOffset),
-
                 m_JointDataHash = joint_hierarchy_built.m_JointDataHash
             };
 
@@ -925,7 +918,6 @@ namespace ModelExporter
                 m_Joints[i].m_NameHash = br.ReadUInt32();
                 m_Joints[i].m_NameOffset = br.ReadUInt32();
             }
-
             joint_hierarchy.m_Joints = m_Joints;
 
             List<string> boneNames = new List<string>();
@@ -934,6 +926,7 @@ namespace ModelExporter
                 br.BaseStream.Seek(JointBlockOffset + (16 * i) + m_Joints[i].m_NameOffset, SeekOrigin.Begin);
                 boneNames.Add(Utils.ReadNullTermString(br));
             }
+
             HashLookupElem[] JointLookup = new HashLookupElem[joint_hierarchy.m_JointCount];
             br.BaseStream.Seek(JointLookupBlockOffset, SeekOrigin.Begin);
             for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
@@ -942,7 +935,6 @@ namespace ModelExporter
                 JointLookup[i].m_Value = br.ReadUInt32();
             }
             joint_hierarchy.m_JointLookup = JointLookup;
-
 
             AnimJointPose[] BindPose = new AnimJointPose[joint_hierarchy.m_JointCount];
             br.BaseStream.Seek(BindPoseBlockOffset, SeekOrigin.Begin);
@@ -1006,16 +998,10 @@ namespace ModelExporter
             }
             joint_hierarchy.m_JointInvBindMats = InvBindPose;
 
-
             br.BaseStream.Seek(JointBspheresBlockOffset, SeekOrigin.Begin);
             JointBSpheres jointBSpheres = new JointBSpheres();
             jointBSpheres.m_BSphereCount = br.ReadUInt32();
-            jointBSpheres.m_Pad = new UInt32[3]
-            {
-                    br.ReadUInt32(),
-                    br.ReadUInt32(),
-                    br.ReadUInt32()
-            };
+            jointBSpheres.m_Pad = new UInt32[3] { br.ReadUInt32(), br.ReadUInt32(), br.ReadUInt32() };
             jointBSpheres.m_BSpheres = new JointBSphereElem[jointBSpheres.m_BSphereCount];
             for (int i = 0; i < jointBSpheres.m_BSphereCount; i++)
             {
@@ -1041,21 +1027,15 @@ namespace ModelExporter
                 jointMirrorId[i].m_IdA = br.ReadUInt16();
                 jointMirrorId[i].m_IdB = br.ReadUInt16();
             }
-
             joint_hierarchy.m_MirrorIds = jointMirrorId;
 
             UInt16[] jointLeafIds = new UInt16[joint_hierarchy.m_LeafCount];
             br.BaseStream.Seek(LeafIdsBlockOffset, SeekOrigin.Begin);
-            for (int i = 0; i < joint_hierarchy.m_LeafCount; i++)
-            {
-                jointLeafIds[i] = br.ReadUInt16();
-            }
-
+            for (int i = 0; i < joint_hierarchy.m_LeafCount; i++) jointLeafIds[i] = br.ReadUInt16();
             joint_hierarchy.m_LeafIds = jointLeafIds;
 
             int SubsetBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelSubsetHash);
-            if (SubsetBlockOffset == -1)
-                throw new Exception("Model Subset block not found.");
+            if (SubsetBlockOffset == -1) throw new Exception("Model Subset block not found.");
 
             int m_SubsetCount = (int)(Utils.GetBlockById(blockHeaders, ModelHash.kModelSubsetHash).m_Size / 128);
             ModelSubset[] m_Subsets = new ModelSubset[m_SubsetCount];
@@ -1110,11 +1090,8 @@ namespace ModelExporter
                 m_Subsets[i].m_PadB = br.ReadUInt32();
             }
 
-
-            //Materials
             int MaterialBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelMaterialHash);
-            if (MaterialBlockOffset == -1)
-                throw new Exception("Model Material block not found.");
+            if (MaterialBlockOffset == -1) throw new Exception("Model Material block not found.");
 
             br.BaseStream.Seek(MaterialBlockOffset, SeekOrigin.Begin);
             var m_MaterialCount = (Utils.GetBlockById(blockHeaders, ModelHash.kModelMaterialHash).m_Size / 32);
@@ -1140,8 +1117,7 @@ namespace ModelExporter
             }
 
             int AnimVertInfoBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelAnimVertInfo2Hash);
-            if (AnimVertInfoBlockOffset == -1)
-                throw new Exception("Models without skinning not supported.");
+            if (AnimVertInfoBlockOffset == -1) throw new Exception("Models without skinning not supported.");
 
             br.BaseStream.Seek(AnimVertInfoBlockOffset, SeekOrigin.Begin);
             AnimVertInfo2 AnimVertInfo = new AnimVertInfo2
@@ -1152,9 +1128,9 @@ namespace ModelExporter
                 m_ZivaInfoPointer = br.ReadUInt64(),
                 m_SmoothInfoPointer = br.ReadUInt64()
             };
+
             int AnimZiva2InfoBlockOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelAnimZiva2InfoHash);
-            if (AnimZiva2InfoBlockOffset == -1)
-                throw new Exception("Model Anim Ziva2 Info block not found.");
+            if (AnimZiva2InfoBlockOffset == -1) throw new Exception("Model Anim Ziva2 Info block not found.");
 
             AnimZiva2Info animZiva2Info = new AnimZiva2Info
             {
@@ -1191,82 +1167,95 @@ namespace ModelExporter
                 }
             };
 
-
-            //Write to Mesh
             var scene = new SceneBuilder();
 
-            
-            NodeBuilder[] boneNodes = new NodeBuilder[joint_hierarchy.m_JointCount];
+            int nJ = joint_hierarchy.m_JointCount;
+            NodeBuilder[] boneNodes = new NodeBuilder[nJ];
 
-            // Create nodes
-            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            for (int i = 0; i < nJ; i++)
             {
-                var pose = joint_hierarchy.m_JointLocalBindPoses[i];
+                var p = joint_hierarchy.m_JointLocalBindPoses[i];
 
-                var translation = new Vector3(
-                    pose.m_t.x,
-                    pose.m_t.y,
-                    pose.m_t.z
-                ) * model_built.m_CommonMetersPerUnit;
+                Vector3 localT = new Vector3(p.m_t.x, p.m_t.y, p.m_t.z);
 
-                var rotation = new Quaternion(
-                    pose.m_q.x,
-                    pose.m_q.y,
-                    pose.m_q.z,
-                    pose.m_q.w
-                );
+                Quaternion localQ = Quaternion.Normalize(new Quaternion(p.m_q.x, p.m_q.y, p.m_q.z, p.m_q.w));
 
-                var scale = new Vector3(
-                    pose.m_s.x,
-                    pose.m_s.y,
-                    pose.m_s.z
-                );
+                Vector3 localS = new Vector3(p.m_s.x, p.m_s.y, p.m_s.z);
 
                 boneNodes[i] = new NodeBuilder(boneNames[i])
-                    .WithLocalTranslation(translation)
-                    .WithLocalRotation(rotation)
-                    .WithLocalScale(scale);
+                    .WithLocalTranslation(localT)
+                    .WithLocalRotation(localQ)
+                    .WithLocalScale(localS);
             }
 
-            // Link hierarchy (build tree)
-            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            for (int i = 0; i < nJ; i++)
             {
-                int parentIndex = joint_hierarchy.m_Joints[i].m_ParentIndex;
-
-                if (parentIndex >= 0 && parentIndex < joint_hierarchy.m_JointCount)
-                    boneNodes[parentIndex].AddNode(boneNodes[i]);
+                int parent = m_Joints[i].m_ParentIndex;
+                if (parent >= 0 && parent < nJ) boneNodes[parent].AddNode(boneNodes[i]);
             }
 
+            var rootIndices = new List<int>();
+            for (int i = 0; i < nJ; i++) if (m_Joints[i].m_ParentIndex < 0) rootIndices.Add(i);
 
-            Matrix4x4[] invBindMatrices = new Matrix4x4[joint_hierarchy.m_JointCount];
-
-            for (int i = 0; i < joint_hierarchy.m_JointCount; i++)
+            if (rootIndices.Count == 0)
             {
-                var inv = joint_hierarchy.m_JointInvBindMats[i];
-
-                invBindMatrices[i] = new Matrix4x4(
-                    inv.x.x, inv.x.y, inv.x.z, 0,
-                    inv.y.x, inv.y.y, inv.y.z, 0,
-                    inv.z.x, inv.z.y, inv.z.z, 0,
-                    inv.w.x, inv.w.y, inv.w.z, 1
-                );
+                scene.AddNode(boneNodes[0]);
             }
-
-            
-            var skinJoints = new (NodeBuilder Joint, Matrix4x4 InverseBindMatrix)[boneNodes.Length];
-
-            for (int i = 0; i < boneNodes.Length; i++)
+            else if (rootIndices.Count == 1)
             {
-                skinJoints[i] = (boneNodes[i], invBindMatrices[i]);
+                scene.AddNode(boneNodes[rootIndices[0]]);
+            }
+            else
+            {
+                var superRoot = new NodeBuilder("Armature");
+                for (int ri = 0; ri < rootIndices.Count; ri++) superRoot.AddNode(boneNodes[rootIndices[ri]]);
+                scene.AddNode(superRoot);
             }
 
+            Matrix4x4 MakeTRS(Vector3 t, Quaternion q, Vector3 s)
+            {
+                var T = Matrix4x4.CreateTranslation(t);
+                var R = Matrix4x4.CreateFromQuaternion(q);
+                var S = Matrix4x4.CreateScale(s);
+                return Matrix4x4.Multiply(Matrix4x4.Multiply(T, R), S); // T * R * S (glTF)
+            }
 
+            Matrix4x4[] local = new Matrix4x4[nJ];
+            for (int i = 0; i < nJ; i++)
+            {
+                var p = joint_hierarchy.m_JointLocalBindPoses[i];
+                var t = new Vector3(p.m_t.x, p.m_t.y, p.m_t.z);                // RAW local translation
+                var q = Quaternion.Normalize(new Quaternion(p.m_q.x, p.m_q.y, p.m_q.z, p.m_q.w));
+                var s = new Vector3(p.m_s.x, p.m_s.y, p.m_s.z);
+                local[i] = MakeTRS(t, q, s);
+            }
 
+            Matrix4x4[] world = new Matrix4x4[nJ];
+            for (int i = 0; i < nJ; i++)
+            {
+                int parent = m_Joints[i].m_ParentIndex;
+                if (parent >= 0 && parent < nJ)
+                    world[i] = Matrix4x4.Multiply(world[parent], local[i]);
+                else
+                    world[i] = local[i];
+            }
+
+            Matrix4x4[] invBindMatrices = new Matrix4x4[nJ];
+            for (int i = 0; i < nJ; i++)
+            {
+                if (!Matrix4x4.Invert(world[i], out invBindMatrices[i]))
+                {
+                    Console.WriteLine($"Warning: world bind matrix for joint {i} not invertible. Falling back to Identity.");
+                    invBindMatrices[i] = Matrix4x4.Identity;
+                }
+            }
+
+            var skinJoints = new (NodeBuilder Joint, Matrix4x4 InverseBindMatrix)[nJ];
+            for (int i = 0; i < nJ; i++) skinJoints[i] = (boneNodes[i], invBindMatrices[i]);
 
             for (int isubset = 0; isubset < m_SubsetCount; isubset++)
             {
-                if (m_Subsets[isubset].m_LodMask != 1)
-                    continue;
+                if (m_Subsets[isubset].m_LodMask != 1) continue;
 
                 Console.WriteLine($"Subset {isubset}");
 
@@ -1275,8 +1264,7 @@ namespace ModelExporter
                 var indices = new Index[subset.m_IndexCount / 3];
 
                 int subsetGeomOffset = Utils.IndexOfBlock(blockHeaders, ModelHash.kModelSubsetGeomDataHash);
-                if (subsetGeomOffset == -1)
-                    throw new Exception("Subset Geometry Data not found.");
+                if (subsetGeomOffset == -1) throw new Exception("Subset Geometry Data not found.");
 
                 br.BaseStream.Seek(subsetGeomOffset + subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_VertexStdOffset, SeekOrigin.Begin);
                 for (int v = 0; v < subset.m_VertexCount; v++)
@@ -1298,9 +1286,9 @@ namespace ModelExporter
                     indices[i].m_VertexC = br.ReadUInt16();
                 }
 
-                var material = new MaterialBuilder(materialSlots[m_Subsets[isubset].m_MaterialIndex]);
-                var meshBuilder = new MeshBuilder<VertexPositionNormal, VertexTexture1>($"{isubset}_{m_ModelName}");
-                var meshBuilderUV1 = new MeshBuilder<VertexPositionNormal, VertexTexture2>($"{isubset}_{m_ModelName}");
+                var material = new MaterialBuilder(materialSlots[subset.m_MaterialIndex]);
+                var meshBuilder = new MeshBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>($"{isubset}_{m_ModelName}");
+                var meshBuilderUV1 = new MeshBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>($"{isubset}_{m_ModelName}");
                 var mesh = meshBuilder.UsePrimitive(material);
                 var meshUV1 = meshBuilderUV1.UsePrimitive(material);
 
@@ -1316,13 +1304,9 @@ namespace ModelExporter
                     uv1[i] = new Vector2(br.ReadInt16() * (1 / 16384.0f), br.ReadInt16() * (1 / 16384.0f));
                 }
 
-                //Weights
                 br.BaseStream.Seek(subsetGeomOffset + subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_SkinClusterOffset, SeekOrigin.Begin);
                 var clusters = new List<ModelSkinCluster>();
-                for (int i = 0; i < subset.m_AnimVertClusterCount; i++)
-                {
-                    clusters.Add(new ModelSkinCluster(br.ReadUInt32()));
-                }
+                for (int i = 0; i < subset.m_AnimVertClusterCount; i++) clusters.Add(new ModelSkinCluster(br.ReadUInt32()));
 
                 var SkinDataOffset = subset.m_GeometryBuiltOffset + subset.m_GeometryDataOffset + subset.m_VertexSkinOffset;
                 br.BaseStream.Seek(subsetGeomOffset + SkinDataOffset, SeekOrigin.Begin);
@@ -1336,60 +1320,117 @@ namespace ModelExporter
                     jointWeightsPerVertex.Add(new float[(int)SubsetDataSizes.kModelSkinJointInfluenceMax]);
                 }
 
-                foreach (var cluster in clusters)
+                // DEBUG flag - set true to print problematic vertex samples
+                const bool DEBUG_SKIN = false;
+
+                // clusters already built earlier
+                int clusterCount = clusters.Count;
+                int clusterSize = (int)SubsetDataSizes.kModelSkinVertClusterSize; // cluster tile size used to compute vertex ranges
+
+                for (int ci = 0; ci < clusterCount; ci++)
                 {
-                    bool is16 = (cluster.m_16BitIndices == 1) ? true : false;
+                    var cluster = clusters[ci];
+
+                    bool is16 = (cluster.m_16BitIndices == 1);
                     int jointOffset = (int)cluster.m_JointOffset256 * 256;
                     int jointCount = (int)cluster.m_InfluenceCountMinus1 + 1;
-                    int bytesPerVertex = jointCount * (is16 ? 2 : 1) + (jointCount == 1 ? 0 : 1);
 
-                    int clusterVertexStart = clusters.IndexOf(cluster) * (int)SubsetDataSizes.kModelSkinVertClusterSize;
-                    int clusterVertexCount = Math.Min((int)SubsetDataSizes.kModelSkinVertClusterSize, (int)subset.m_VertexCount - clusterVertexStart);
+                    // bytes for indices (per influence) + bytes for weights (one per influence if jointCount > 1)
+                    int bytesPerVertex = jointCount * (is16 ? 2 : 1) + (jointCount > 1 ? jointCount : 0);
+
+                    int clusterVertexStart = ci * clusterSize;
+                    int clusterVertexCount = Math.Min(clusterSize, (int)subset.m_VertexCount - clusterVertexStart);
 
                     int clusterDataOffset = (int)(cluster.m_SkinDataOffset4 * 4);
                     int cursor = clusterDataOffset;
 
-                    for (int i = 0; i < clusterVertexCount; i++)
+                    // Bounds check: make sure the subsetSkinData buffer contains enough bytes
+                    long needed = (long)cursor + (long)bytesPerVertex * clusterVertexCount;
+                    if (cursor < 0 || needed > subsetSkinData.Length)
                     {
+                        // Try to be tolerant: if data runs out, clamp clusterVertexCount
+                        if (cursor < 0 || cursor >= subsetSkinData.Length)
+                        {
+                            if (DEBUG_SKIN) Console.WriteLine($"Cluster {ci} has invalid data offset {cursor}. Skipping cluster.");
+                            continue;
+                        }
+                        // reduce count to available bytes
+                        clusterVertexCount = (subsetSkinData.Length - cursor) / Math.Max(1, bytesPerVertex);
+                        if (DEBUG_SKIN) Console.WriteLine($"Cluster {ci}: truncated vertex count to {clusterVertexCount} due to buffer size.");
+                    }
+
+                    for (int vi = 0; vi < clusterVertexCount; vi++)
+                    {
+                        int vertexIndex = clusterVertexStart + vi;
+                        if (vertexIndex < 0 || vertexIndex >= jointIndicesPerVertex.Count) break;
+
+                        // initialize per-vertex arrays
                         int[] jointIndices = new int[(int)SubsetDataSizes.kModelSkinJointInfluenceMax];
                         float[] jointWeights = new float[(int)SubsetDataSizes.kModelSkinJointInfluenceMax];
+                        for (int k = 0; k < jointIndices.Length; k++) jointIndices[k] = -1;
 
-                        int joint = jointOffset;
+                        // read each influence for this vertex
+                        int runningJointBase = jointOffset; // used for 8-bit delta indexing if format expects offset accumulation
                         for (int j = 0; j < jointCount; j++)
                         {
-                            float weight = 1.0f;
+                            if (cursor >= subsetSkinData.Length)
+                            {
+                                // truncated - leave remaining influences empty
+                                if (DEBUG_SKIN) Console.WriteLine($"Cluster {ci} vertex {vertexIndex}: skin data truncated at influence {j} (cursor {cursor}).");
+                                break;
+                            }
+
+                            int jointIndexVal;
                             if (is16)
                             {
-                                joint = subsetSkinData[cursor] | (subsetSkinData[cursor + 1] << 8);
+                                if (cursor + 1 >= subsetSkinData.Length)
+                                {
+                                    if (DEBUG_SKIN) Console.WriteLine($"Cluster {ci} vertex {vertexIndex}: cannot read 16-bit index at cursor {cursor}.");
+                                    break;
+                                }
+                                // little-endian 16-bit
+                                jointIndexVal = subsetSkinData[cursor] | (subsetSkinData[cursor + 1] << 8);
                                 cursor += 2;
                             }
                             else
                             {
-                                joint += subsetSkinData[cursor++];
+                                // 8-bit indices are stored as deltas relative to runningJointBase in many formats.
+                                // Keep the "running" behavior you already had, but store computed index.
+                                runningJointBase += subsetSkinData[cursor++];
+                                jointIndexVal = runningJointBase;
                             }
 
+                            float weight = 1.0f;
                             if (jointCount > 1)
                             {
-                                weight = subsetSkinData[cursor++] * (1.0f / 255.0f);
+                                if (cursor >= subsetSkinData.Length)
+                                {
+                                    if (DEBUG_SKIN) Console.WriteLine($"Cluster {ci} vertex {vertexIndex}: expected weight byte for influence {j}, but buffer ended.");
+                                    weight = 0f;
+                                }
+                                else
+                                {
+                                    weight = subsetSkinData[cursor++] * (1.0f / 255.0f);
+                                }
                             }
 
-                            jointIndices[j] = joint;
+                            // sanitize joint index and weight
+                            if (jointIndexVal < 0 || jointIndexVal >= joint_hierarchy.m_JointCount)
+                            {
+                                if (DEBUG_SKIN) Console.WriteLine($"Cluster {ci} vertex {vertexIndex}: joint index {jointIndexVal} out of range, setting weight 0.");
+                                jointIndexVal = -1;
+                                weight = 0f;
+                            }
+
+                            jointIndices[j] = jointIndexVal;
                             jointWeights[j] = weight;
                         }
 
-                        float totalWeight = jointWeights.Take(jointCount).Sum();
-                        if (totalWeight > 0)
-                        {
-                            for (int j = 0; j < jointCount; j++)
-                                jointWeights[j] /= totalWeight;
-                        }
-
-                        jointIndicesPerVertex[clusterVertexStart + i] = jointIndices;
-                        jointWeightsPerVertex[clusterVertexStart + i] = jointWeights;
+                        // store results
+                        jointIndicesPerVertex[vertexIndex] = jointIndices;
+                        jointWeightsPerVertex[vertexIndex] = jointWeights;
                     }
                 }
-
-
                 for (int j = 0; j < vertexCount; j++)
                 {
                     normals[j] = Utils.DecodeNormal(vertices[j]);
@@ -1397,74 +1438,89 @@ namespace ModelExporter
                     UVs[j] = new VertexTexture2(uv0[j], uv1[j]);
                 }
 
-                //var skinJoints = new (NodeBuilder Joint, Matrix4x4 InverseBindMatrix)[boneNodes.Length];
-
-                //for (int i = 0; i < boneNodes.Length; i++)
-                //{
-                //    skinJoints[i] = (boneNodes[i], invBindMatrices[i]);
-                //}
-
                 VertexJoints4[] skinVerts = new VertexJoints4[subset.m_VertexCount];
-
                 for (int v = 0; v < subset.m_VertexCount; v++)
                 {
-                    var joints = jointIndicesPerVertex[v];
-                    var weights = jointWeightsPerVertex[v];
+                    var inds = jointIndicesPerVertex[v];
+                    var ws = jointWeightsPerVertex[v];
 
-                    skinVerts[v] = new VertexJoints4((joints[0], weights[0]), (joints[1], weights[1]), (joints[2], weights[2]), (joints[3], weights[3]));
+                    var pairs = new List<(int idx, float w)>();
+                    for (int k = 0; k < inds.Length; k++)
+                    {
+                        if (inds[k] >= 0 && ws[k] > 0f) pairs.Add((inds[k], ws[k]));
+                    }
+
+                    if (pairs.Count == 0)
+                    {
+                        // no valid influences — give fallback to joint 0
+                        pairs.Add((0, 1.0f));
+                    }
+
+                    var top = pairs.OrderByDescending(p => p.w).Take(4).ToList();
+                    while (top.Count < 4) top.Add((0, 0f));
+
+                    float sum = top.Sum(t => t.w);
+                    if (sum > 0f)
+                    {
+                        for (int t = 0; t < top.Count; t++) top[t] = (top[t].idx, top[t].w / sum);
+                    }
+                    else
+                    {
+                        top[0] = (top[0].idx, 1.0f);
+                    }
+
+                    skinVerts[v] = new VertexJoints4((top[0].idx, top[0].w), (top[1].idx, top[1].w), (top[2].idx, top[2].w), (top[3].idx, top[3].w));
                 }
 
+                var scaleToMeters = model_built.m_CommonMetersPerUnit;
 
                 for (int i = 0; i < (subset.m_IndexCount / 3); i++)
                 {
-                    //Console.WriteLine($"Index {i}");
                     int ia = indices[i].m_VertexA;
                     int ib = indices[i].m_VertexB;
                     int ic = indices[i].m_VertexC;
 
-                    VertexPositionNormal p0 = new VertexPositionNormal(new Vector3(vertices[ia].m_Position_X, vertices[ia].m_Position_Y, vertices[ia].m_Position_Z) * subset.m_MetersPerUnit, normals[ia]);
-                    VertexPositionNormal p1 = new VertexPositionNormal(new Vector3(vertices[ib].m_Position_X, vertices[ib].m_Position_Y, vertices[ib].m_Position_Z) * subset.m_MetersPerUnit, normals[ib]);
-                    VertexPositionNormal p2 = new VertexPositionNormal(new Vector3(vertices[ic].m_Position_X, vertices[ic].m_Position_Y, vertices[ic].m_Position_Z) * subset.m_MetersPerUnit, normals[ic]);
+                    VertexPositionNormal p0 = new VertexPositionNormal(
+                        new Vector3(vertices[ia].m_Position_X, vertices[ia].m_Position_Y, vertices[ia].m_Position_Z) * scaleToMeters,
+                        normals[ia]);
 
-                    var vA = ia;
-                    var vB = ib;
-                    var vC = ic;
+                    VertexPositionNormal p1 = new VertexPositionNormal(
+                        new Vector3(vertices[ib].m_Position_X, vertices[ib].m_Position_Y, vertices[ib].m_Position_Z) * scaleToMeters,
+                        normals[ib]);
 
-                    var jA = skinVerts[vA];
-                    var jB = skinVerts[vB];
-                    var jC = skinVerts[vC];
+                    VertexPositionNormal p2 = new VertexPositionNormal(
+                        new Vector3(vertices[ic].m_Position_X, vertices[ic].m_Position_Y, vertices[ic].m_Position_Z) * scaleToMeters,
+                        normals[ic]);
+
+                    var jA = skinVerts[ia];
+                    var jB = skinVerts[ib];
+                    var jC = skinVerts[ic];
 
                     if (subset.m_VertexUV12Offset == 0)
                     {
-                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>(p0, uv0[ia], jA);
-                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>(p1, uv0[ib], jB);
-                        VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>(p2, uv0[ic], jC);
+                        var vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>(p0, uv0[ia], jA);
+                        var vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>(p1, uv0[ib], jB);
+                        var vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture1, VertexJoints4>(p2, uv0[ic], jC);
                         mesh.AddTriangle(vert1, vert2, vert3);
                     }
                     else
                     {
-                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4> vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>(p0, UVs[ia], jA);
-                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4> vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>(p1, UVs[ib], jB);
-                        VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4> vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>(p2, UVs[ic], jC);
+                        var vert1 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>(p0, UVs[ia], jA);
+                        var vert2 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>(p1, UVs[ib], jB);
+                        var vert3 = new VertexBuilder<VertexPositionNormal, VertexTexture2, VertexJoints4>(p2, UVs[ic], jC);
                         meshUV1.AddTriangle(vert1, vert2, vert3);
                     }
                 }
 
                 if (subset.m_VertexUV12Offset == 0)
-                {
                     scene.AddSkinnedMesh(meshBuilder, skinJoints);
-                }
                 else
-                {
                     scene.AddSkinnedMesh(meshBuilderUV1, skinJoints);
-                }
             }
+
             var model = scene.ToGltf2();
 
-            if(!Directory.Exists("Exported"))
-            {
-                Directory.CreateDirectory("Exported");
-            }
+            if (!Directory.Exists("Exported")) Directory.CreateDirectory("Exported");
             model.SaveGLB($"Exported/{m_ModelName}.glb");
             Console.WriteLine($"Exported to \"Exported/{m_ModelName}.glb\"");
         }
