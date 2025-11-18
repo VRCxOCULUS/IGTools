@@ -1,3 +1,5 @@
+using System.Windows.Forms;
+
 namespace IGTools
 {
     public partial class LandingPage : Form
@@ -10,50 +12,35 @@ namespace IGTools
 
         private void NewMaterial(object sender, EventArgs e)
         {
+            CreateMaterial createMaterial = new CreateMaterial();
+            createMaterial.ShowDialog();
 
+            if(!createMaterial.validParams)
+                return;
+
+            EditorWindow materialEditor = new EditorWindow(createMaterial.Name, createMaterial.Template);
+            this.Hide();
+            materialEditor.ShowDialog();
+            this.Close();
         }
 
         private void OpenMaterial(object sender, EventArgs e)
         {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Material Asset (*.material)|*.material";
+            openFileDialog.Title = "Open Material Asset";
+            openFileDialog.ShowDialog();
 
-        }
-
-
-        // Event Handlers for Title Bar Buttons
-
-        private void CloseWindow(object sender, EventArgs e)
-        {
-            this.Close();
-            Application.Exit();
-        }
-
-        private void MaxWindow(object sender, EventArgs e)
-        {
-            this.WindowState = FormWindowState.Maximized;
-        }
-
-        private void MinWindow(object sender, EventArgs e)
-        {
-            this.WindowState = FormWindowState.Minimized;
-        }
-
-        public const int WM_NCLBUTTONDOWN = 0xA1;
-        public const int HT_CAPTION = 0x2;
-
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern bool ReleaseCapture();
-
-
-
-        private void MoveWindow(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
+            if(openFileDialog.FileName == "")
             {
-                ReleaseCapture();
-                SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+                return;
             }
+
+            string filePath = openFileDialog.FileName;
+            EditorWindow materialEditor = new EditorWindow(filePath);
+            this.Hide();
+            materialEditor.ShowDialog();
+            this.Close();
         }
     }
 }

@@ -1,57 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace MaterialEditor
+﻿namespace IGTools
 {
-    public partial class Editor : Form
+    public partial class EditorWindow : Form
     {
-        public Editor()
+        // New Material
+        public EditorWindow(string AssetName, string TemplatePath)
         {
             InitializeComponent();
+            Material material = new Material();
+            material.Name = AssetName;
+            material.Template = TemplatePath;
+            this.Text = material.Name + " - Editor";
         }
 
-        // Event Handlers for Title Bar Buttons
-
-        private void CloseWindow(object sender, EventArgs e)
+        // Open Material
+        public EditorWindow(string AssetPath)
         {
-            this.Close();
-            Application.Exit();
+            InitializeComponent();
+            Material material = new Material();
+            material.LoadMaterial(AssetPath);
+            this.Text = material.Name + " - Editor";
         }
 
-        private void MaxWindow(object sender, EventArgs e)
+        private void ConfirmClose(object sender, FormClosingEventArgs e)
         {
-            this.WindowState = FormWindowState.Maximized;
-        }
-
-        private void MinWindow(object sender, EventArgs e)
-        {
-            this.WindowState = FormWindowState.Minimized;
-        }
-
-        public const int WM_NCLBUTTONDOWN = 0xA1;
-        public const int HT_CAPTION = 0x2;
-
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern bool ReleaseCapture();
-
-
-
-        private void MoveWindow(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                ReleaseCapture();
-                SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
-            }
+            var result = MessageBox.Show("Do you want to save before closing?", "", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            e.Cancel = result == DialogResult.Cancel;
         }
     }
 }

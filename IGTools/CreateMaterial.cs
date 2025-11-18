@@ -9,54 +9,46 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace MaterialEditor
+namespace IGTools
 {
     public partial class CreateMaterial : Form
     {
+        public string Name;
+        public string Template;
+
+        public bool validParams = false;
+
         public CreateMaterial()
         {
             InitializeComponent();
         }
 
-        // Event Handlers for Title Bar Buttons
-
-        private void CloseWindow(object sender, EventArgs e)
+        private void Create_Click(object sender, EventArgs e)
         {
+            Name = txtName.Text;
+            Template = txtTemplate.Text;
+            if (Path.GetExtension(Name) != ".material")
+            {
+                MessageBox.Show("Invalid material name. Make sure name ends with \".material\".", "Error Creating Material", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            if (Path.GetExtension(Template) != ".materialgraph")
+            {
+                MessageBox.Show("Selected path is not a material template.", "Error Creating Material", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            validParams = true;
             this.Close();
         }
 
-        public const int WM_NCLBUTTONDOWN = 0xA1;
-        public const int HT_CAPTION = 0x2;
-
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern bool ReleaseCapture();
-
-
-
-        private void MoveWindow(object sender, MouseEventArgs e)
+        private void SelectTemplatePath(object sender, EventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
-            {
-                ReleaseCapture();
-                SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
-            }
-        }
+            OpenFileDialog selectTemplate = new OpenFileDialog();
+            selectTemplate.Filter = "Material Template (*.materialgraph)|*.materialgraph";
+            selectTemplate.Title = "Select Material Template";
+            selectTemplate.ShowDialog();
 
-        private void SetMaterialPath(object sender, EventArgs e)
-        {
-            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
-            {
-                MaterialPathTextBox.Text = folderBrowserDialog.SelectedPath;
-            }
+            txtTemplate.Text = selectTemplate.FileName;
         }
-
-        private void InitEditor(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
     }
 }

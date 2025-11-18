@@ -1,0 +1,90 @@
+unsorted (as in data header)
+------------------------------
+0x06EB7EFC: 0x0000BE00, 0x00000060
+0x0859863D: 0x004D93E0, 0x0017B06E
+0x0AD3A708: 0x00009060, 0x00000858
+0x15DF9D3B: 0x00002E10, 0x00000BF0
+0x283D0383: 0x00002D40, 0x00000078
+0x3250BB80: 0x0000E440, 0x00000160
+0x380A5744: 0x0017F760, 0x000077D4
+0x4CCEA4AD: 0x0000BE60, 0x0000001F
+0x5E709570: 0x00186F40, 0x0031D7EC
+0x731CBC2E: 0x0000BA80, 0x00000378
+0x78D9CBDE: 0x0000D380, 0x000010C0
+0x7CA37DA0: 0xF0924D00, 0x000000F0
+0x811902D7: 0x0000EE80, 0x000014D4
+0x90CDB60C: 0x00002DC0, 0x00000050
+0x9F614FAB: 0x00009EC0, 0x00001BC0
+0xA600C108: 0x004A4730, 0x00034BC0
+0xA98BE69B: 0x00654450, 0x003F1780
+0xB7380E8C: 0x00008F70, 0x000000E8
+0xC5354B60: 0x00008DC0, 0x000001AC
+0xC61B1FF5: 0x0017EEB0, 0x00000880
+0xDCA379A2: 0x0000E5A0, 0x00170903
+0xDCC88A19: 0x00003A00, 0x000053C0
+0xDF9FDF12: 0x00002D10, 0x00000030
+0xEE31971C: 0x000098C0, 0x00000600
+0xEFD92E68: 0x00002550, 0x000007B8
+
+sorted by offset (as in location in file)
+------------------------------
+0xEFD92E68 (havok related)
+0xDF9FDF12 (unknown)
+0x283D0383 (unknown)
+0x90CDB60C (unknown)
+0x15DF9D3B (misc info, hash of bone names, name offsets, most likely defines skeleton)
+0xDCC88A19 (unknown)
+0xC5354B60 (unknown)
+0xB7380E8C (unknown)
+0x0AD3A708 (unknown)
+0xEE31971C (unknown)
+0x9F614FAB (unknown)
+0x731CBC2E (unknown)
+0x06EB7EFC (lod mesh indices, if memory serves)
+0x4CCEA4AD (unknown)
+0x78D9CBDE (unknown)
+0x3250BB80 (contains all material paths mapped to material slots via offsets and hashes)
+0xDCA379A2 (unknown)
+0x811902D7 (contains offsets to lookgroup names in string buffer)
+0xC61B1FF5 (unknown)
+0x380A5744 (contains offsets to morph names in string buffer)
+0x5E709570 (largest block, most likely vertex data)
+0xA600C108 (unknown)
+0x0859863D (unknown)
+0xA98BE69B (unknown)
+0x7CA37DA0 (unknown)
+
+Materials (path, slot)
+ 
+materials\hrm_bdy_raj_body\hero_spiderman2099_metal.material
+hero_spiderman2099_metal 
+
+materials\hrm_bdy_raj_body\hero_spiderman2099_leg.material
+hero_spiderman2099_leg
+
+material\characters\hero\test\test_hero_fabriclayer\hero_spiderman2099_fabriclayerBigger.material
+hero_spiderman2099_fabriclayerBigger
+
+materials\hrm_bdy_raj_body\hero_spiderman2099_head.material
+hero_spiderman2099_head
+
+materials\hrm_bdy_raj_body\hero_spiderman2099_body.material
+hero_spiderman2099_body
+
+materials\hrm_bdya_raj_clothes_sneakers\hero_spiderman2099_shoe.material
+hero_spiderman2099_shoe
+
+materials\hrm_bdy_raj_body\hero_spiderman2099_bodyarmor.material
+hero_spiderman2099_bodyarmor
+
+materials\hrm_bdy_raj_body\hero_spiderman2099_red.material
+hero_spiderman2099_red
+
+materials\hrm_bdy_raj_body\hero_spiderman2099_hand.material
+hero_spiderman2099_hand
+
+materials\glass\hero_spiderman2099_glass.material
+hero_spiderman2099_glass
+
+material\characters\hero\test\test_hero_fabriclayer\hero_spiderman2099_fabriclayer.material
+hero_spiderman2099_fabriclayer

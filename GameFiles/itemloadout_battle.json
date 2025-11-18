@@ -1,0 +1,27 @@
+{
+	"Type": {
+		"Type": "ItemLoadoutConfig"
+	},
+	"Def": {
+		"AssetReferences":
+		[
+			"configs\\vanitybodytype\\logan\\vanitybody_battle.config",
+			"configs\\vanitybodytype\\logan\\vanityhead_battle.config"
+		],
+		"Loadout": {
+			"ItemLoadoutLists": [
+				{
+					"Items":
+					[
+						{ "Item": "configs/vanitybodytype/logan/vanitybody_battle.config" },
+						{ "Item": "configs/vanitybodytype/logan/vanityhead_battle.config" }
+					]
+				}
+			],
+			"Name": "Battle"
+		}
+	},
+	"VaultMetaData":
+	{ "CreatedBy": "IGTools" },
+	"Version": "1.2"
+}

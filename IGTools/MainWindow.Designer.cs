@@ -34,12 +34,7 @@
             panel1 = new Panel();
             label1 = new Label();
             Title = new Label();
-            TitleBar = new Panel();
-            Min = new Button();
-            Max = new Button();
-            Close = new Button();
             panel1.SuspendLayout();
-            TitleBar.SuspendLayout();
             SuspendLayout();
             // 
             // button1
@@ -52,7 +47,7 @@
             button1.FlatStyle = FlatStyle.Flat;
             button1.Font = new Font("Ubuntu", 20F, FontStyle.Regular, GraphicsUnit.Point);
             button1.ForeColor = Color.FromArgb(235, 235, 250);
-            button1.Location = new Point(79, 430);
+            button1.Location = new Point(79, 449);
             button1.Margin = new Padding(3, 4, 3, 4);
             button1.Name = "button1";
             button1.Size = new Size(286, 93);
@@ -71,7 +66,7 @@
             button2.FlatStyle = FlatStyle.Flat;
             button2.Font = new Font("Ubuntu", 19.8000011F, FontStyle.Regular, GraphicsUnit.Point);
             button2.ForeColor = Color.FromArgb(235, 235, 250);
-            button2.Location = new Point(609, 430);
+            button2.Location = new Point(609, 449);
             button2.Margin = new Padding(3, 4, 3, 4);
             button2.Name = "button2";
             button2.Size = new Size(286, 93);
@@ -89,10 +84,10 @@
             panel1.Controls.Add(button1);
             panel1.Controls.Add(button2);
             panel1.ForeColor = Color.Black;
-            panel1.Location = new Point(11, 55);
+            panel1.Location = new Point(12, 13);
             panel1.Margin = new Padding(3, 4, 3, 4);
             panel1.Name = "panel1";
-            panel1.Size = new Size(975, 610);
+            panel1.Size = new Size(975, 649);
             panel1.TabIndex = 2;
             // 
             // label1
@@ -101,7 +96,7 @@
             label1.AutoSize = true;
             label1.Font = new Font("Ubuntu", 18F, FontStyle.Regular, GraphicsUnit.Point);
             label1.ForeColor = Color.FromArgb(118, 178, 187);
-            label1.Location = new Point(424, 160);
+            label1.Location = new Point(424, 179);
             label1.Name = "label1";
             label1.Size = new Size(123, 35);
             label1.TabIndex = 3;
@@ -114,95 +109,28 @@
             Title.AutoSize = true;
             Title.Font = new Font("Ubuntu", 40F, FontStyle.Regular, GraphicsUnit.Point);
             Title.ForeColor = Color.FromArgb(235, 235, 250);
-            Title.Location = new Point(246, 40);
+            Title.Location = new Point(246, 59);
             Title.Name = "Title";
             Title.Size = new Size(490, 79);
             Title.TabIndex = 2;
             Title.Text = "Material Editor";
             Title.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // TitleBar
-            // 
-            TitleBar.BackColor = Color.FromArgb(35, 35, 35);
-            TitleBar.Controls.Add(Min);
-            TitleBar.Controls.Add(Max);
-            TitleBar.Controls.Add(Close);
-            TitleBar.Dock = DockStyle.Top;
-            TitleBar.Location = new Point(0, 0);
-            TitleBar.Margin = new Padding(3, 4, 3, 4);
-            TitleBar.Name = "TitleBar";
-            TitleBar.Size = new Size(1000, 47);
-            TitleBar.TabIndex = 3;
-            TitleBar.MouseDown += MoveWindow;
-            // 
-            // Min
-            // 
-            Min.Dock = DockStyle.Right;
-            Min.FlatAppearance.BorderSize = 0;
-            Min.FlatAppearance.MouseDownBackColor = Color.FromArgb(118, 178, 187);
-            Min.FlatAppearance.MouseOverBackColor = Color.FromArgb(118, 178, 187);
-            Min.FlatStyle = FlatStyle.Flat;
-            Min.ForeColor = Color.FromArgb(64, 64, 64);
-            Min.Image = (Image)resources.GetObject("Min.Image");
-            Min.Location = new Point(793, 0);
-            Min.Margin = new Padding(3, 4, 3, 4);
-            Min.Name = "Min";
-            Min.Size = new Size(69, 47);
-            Min.TabIndex = 2;
-            Min.UseVisualStyleBackColor = false;
-            Min.Click += MinWindow;
-            // 
-            // Max
-            // 
-            Max.Dock = DockStyle.Right;
-            Max.FlatAppearance.BorderSize = 0;
-            Max.FlatAppearance.MouseDownBackColor = Color.FromArgb(215, 215, 230);
-            Max.FlatAppearance.MouseOverBackColor = Color.FromArgb(235, 235, 250);
-            Max.FlatStyle = FlatStyle.Flat;
-            Max.ForeColor = Color.FromArgb(64, 64, 64);
-            Max.Image = (Image)resources.GetObject("Max.Image");
-            Max.Location = new Point(862, 0);
-            Max.Margin = new Padding(3, 4, 3, 4);
-            Max.Name = "Max";
-            Max.Size = new Size(69, 47);
-            Max.TabIndex = 1;
-            Max.UseVisualStyleBackColor = false;
-            Max.Click += MaxWindow;
-            // 
-            // Close
-            // 
-            Close.Dock = DockStyle.Right;
-            Close.FlatAppearance.BorderSize = 0;
-            Close.FlatAppearance.MouseDownBackColor = Color.DarkRed;
-            Close.FlatAppearance.MouseOverBackColor = Color.Red;
-            Close.FlatStyle = FlatStyle.Flat;
-            Close.ForeColor = Color.FromArgb(64, 64, 64);
-            Close.Image = (Image)resources.GetObject("Close.Image");
-            Close.Location = new Point(931, 0);
-            Close.Margin = new Padding(3, 4, 3, 4);
-            Close.Name = "Close";
-            Close.Size = new Size(69, 47);
-            Close.TabIndex = 0;
-            Close.UseVisualStyleBackColor = false;
-            Close.Click += CloseWindow;
-            // 
             // LandingPage
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(40, 40, 40);
-            ClientSize = new Size(1000, 680);
-            Controls.Add(TitleBar);
+            ClientSize = new Size(1000, 675);
             Controls.Add(panel1);
             ForeColor = Color.Transparent;
-            FormBorderStyle = FormBorderStyle.None;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(3, 4, 3, 4);
             Name = "LandingPage";
             Text = "IGMaterialTool";
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
-            TitleBar.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -211,10 +139,6 @@
         private Button button1;
         private Button button2;
         private Panel panel1;
-        private Panel TitleBar;
-        private Button Close;
-        private Button Max;
-        private Button Min;
         private Label Title;
         private Label label1;
     }

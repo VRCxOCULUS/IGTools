@@ -1,0 +1,26 @@
+{
+  "Type":
+  { "Type": "ItemLoadoutConfig" },
+  "Def":
+  {
+    "AssetReferences":
+    [
+      "configs\\VanityBodyType\\VanityBody_SpiderMan.config",
+      "configs\\VanityHED\\VanityHEDSpiderMan1.config",
+      "configs\\vanitytor1\\vanity_spiderman_webbed.config"
+    ],
+    "Loadout":
+    {
+      "Items":
+      [
+        { "Item": "configs/VanityBodyType/VanityBody_SpiderMan.config" },
+        { "Item": "configs/VanityHED/VanityHEDSpiderMan1.config" },
+        { "Item": "configs/vanitytor1/vanity_spiderman_webbed.config" }
+      ]
+    },
+    "Name": "Spider-Man Webbed Suit"
+  },
+  "VaultMetaData":
+	{ "CreatedBy": "IGTools" },
+	"Version": "1.2"
+}

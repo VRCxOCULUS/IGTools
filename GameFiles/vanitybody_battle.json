@@ -1,0 +1,38 @@
+{
+	"Type":
+	{ "Type": "VanityItemConfig" },
+	"Def":
+	{
+		"AssetReferences":
+		[ "ui\\loaded\\authored\\art\\textures\\suits\\suit_battle.texture" ],
+		"Available": "kHero",
+		"Category": "kBodySize",
+		"GameItemData":
+		{
+			"DisplayDescriptionTag": "We didn't add any red to this suit.  Feel free to add your own splashes of color.",
+			"DisplayNameTag": "BATTLE SUIT",
+			"Icon":
+			{ "AssetPath": "ui/loaded/authored/art/textures/suits/suit_battle.texture" },
+			"Theme":
+			[ "kVanity" ]
+		},
+		"ModelList":
+		[
+			{
+				"BodyType": "kAll",
+				"Model":
+				{
+					"AssetPath": "actors/models/test/test_wolverine/test_wolverine_battle.actor",
+					"Autoload": false
+				}
+			}
+		],
+		"Name": "Battle",
+		"PartType": "kTypeBareTorsoAndArms",
+		"ShaderUpdater":
+		{ "Type": "SkinShaderUpdaterPrius" }
+	},
+	"VaultMetaData":
+	{ "CreatedBy": "IGTools" },
+	"Version": "1.2"
+}

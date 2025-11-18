@@ -8,6 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>insomniac-games.ico</ApplicationIcon>
     <PackageIcon>insomniac-games.png</PackageIcon>
+    <StartupObject>IGTools.Program</StartupObject>
+    <PackageId>IGTools</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +21,10 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
 
 </Project>

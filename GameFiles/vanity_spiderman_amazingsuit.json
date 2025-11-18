@@ -1,0 +1,69 @@
+{
+  "Header": {
+    "Type": {
+      "File Reference Section": false,
+      "Type": "STRING",
+      "Value": "VanityItemConfig"
+    }
+  },
+  "Main": {
+    "ModelList": {
+      "Type": "OBJECT",
+      "Value": {
+        "Model": {
+          "Type": "OBJECT",
+          "Value": {
+            "AssetPath": {
+              "File Reference Section": false,
+              "Type": "STRING",
+              "Value": "characters/hero/hero_spiderman_tasm/hero_spiderman_tasm.model"
+            },
+            "Autoload": {
+              "Type": "BOOLEAN",
+              "Value": false
+            }
+          }
+        },
+        "BodyType": {
+          "File Reference Section": false,
+          "Type": "STRING",
+          "Value": "kAll"
+        }
+      }
+    },
+    "ShaderUpdater": {
+      "Type": "OBJECT",
+      "Value": {
+        "Type": {
+          "File Reference Section": false,
+          "Type": "STRING",
+          "Value": "SkinShaderUpdaterPrius"
+        }
+      }
+    },
+    "PartType": {
+      "File Reference Section": false,
+      "Type": "STRING",
+      "Value": "kTypeBareTorsoAndArms"
+    },
+    "Category": {
+      "File Reference Section": false,
+      "Type": "STRING",
+      "Value": "kDefaultItem"
+    },
+    "Available": {
+      "File Reference Section": false,
+      "Type": "STRING",
+      "Value": "kDefault"
+    },
+    "Name": {
+      "File Reference Section": false,
+      "Type": "STRING",
+      "Value": "Amazing"
+    },
+    "SwitchGroupList": {
+      "Type": "NULL",
+      "Value": null
+    }
+  }
+}

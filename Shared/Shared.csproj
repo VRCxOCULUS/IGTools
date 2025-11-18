@@ -44,18 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DAT1\CRC32.cs" />
-    <Compile Include="DAT1\CRC64.cs" />
-    <Compile Include="DAT1\DAT1.cs" />
-    <Compile Include="DAT1\Types\Config\Config.cs" />
-    <Compile Include="DAT1\Types\Model\Model.cs" />
-    <Compile Include="DAT1\Utils.cs" />
-    <Compile Include="Util\Align.cs" />
+    <Compile Include="DAT1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="DAT1\Types\Material\" />
-    <Folder Include="DAT1\Types\Texture\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -3,6 +3,7 @@ using Newtonsoft.Json.Converters;
 using System;
 using System.IO;
 using System.Text;
+using Shared;
 
 namespace DAT1
 {
@@ -80,12 +81,27 @@ namespace DAT1
 
         static void Main(string[] args)
         {
-            string input = Console.ReadLine();
-            Console.WriteLine("CRC32: " + CRC32.Hash(input, false).ToString("X4"));
-            Console.WriteLine("CRC32 Normalized: " + CRC32.Hash(input, true).ToString("X4"));
+            BinaryReader br = new BinaryReader(File.OpenRead("C:/Users/27alexander.smith_ca/Desktop/Personal/IGTools/GameFiles/hero_spiderman_advanced_blue_a.material"));
+            Shared.DAT1 test = new Shared.DAT1();
 
-            Console.WriteLine("CRC64: " + CRC64.Hash(input, false).ToString("X8"));
-            Console.WriteLine("CRC64 Normalized: " + CRC64.Hash(input, true).ToString("X8"));
+            test.m_DataFileId = br.ReadUInt32();
+            test.m_VersionNumber = br.ReadUInt32();
+            test.m_FileSize = br.ReadUInt32();
+            test.m_BlockCount = br.ReadUInt16();
+            test.m_FixupCount = br.ReadUInt16();
+
+            Shared.DAT1.DataBlockHeader[] BlockHeaders = new Shared.DAT1.DataBlockHeader[test.m_BlockCount];
+
+            for (int i = 0; i < test.m_BlockCount; i++)
+            {
+                BlockHeaders[i] = new Shared.DAT1.DataBlockHeader
+                {
+                    m_NameHash = br.ReadUInt32(),
+                    m_Offset = br.ReadUInt32(),
+                    m_Size = br.ReadUInt32()
+                };
+                Console.WriteLine($"Block {i}: {(Shared.Hashes.MaterialHashes)BlockHeaders[i].m_NameHash}");
+            }
         }
     }
 }
