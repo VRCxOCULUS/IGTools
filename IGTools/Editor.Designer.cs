@@ -29,90 +29,163 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(EditorWindow));
-            panel1 = new Panel();
             splitContainer1 = new SplitContainer();
+            lstParams = new ListBox();
             lblParams = new Label();
-            listView1 = new ListView();
-            panel1.SuspendLayout();
+            label = new Label();
+            textBox1 = new TextBox();
+            TextureViewer = new PictureBox();
+            lblPropertyName = new Label();
+            checkBox1 = new CheckBox();
+            panel1 = new Panel();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)TextureViewer).BeginInit();
             SuspendLayout();
-            // 
-            // panel1
-            // 
-            panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            panel1.BackColor = Color.FromArgb(30, 30, 30);
-            panel1.Controls.Add(splitContainer1);
-            panel1.Location = new Point(12, 12);
-            panel1.Name = "panel1";
-            panel1.Size = new Size(976, 656);
-            panel1.TabIndex = 5;
             // 
             // splitContainer1
             // 
-            splitContainer1.Dock = DockStyle.Fill;
-            splitContainer1.Location = new Point(0, 0);
+            splitContainer1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            splitContainer1.Location = new Point(9, 48);
+            splitContainer1.Margin = new Padding(3, 2, 3, 2);
             splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
             // 
             splitContainer1.Panel1.BackColor = Color.FromArgb(40, 40, 40);
-            splitContainer1.Panel1.Controls.Add(listView1);
+            splitContainer1.Panel1.Controls.Add(lstParams);
             splitContainer1.Panel1.Controls.Add(lblParams);
             // 
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.BackColor = Color.FromArgb(30, 30, 30);
-            splitContainer1.Size = new Size(976, 656);
-            splitContainer1.SplitterDistance = 271;
+            splitContainer1.Panel2.Controls.Add(label);
+            splitContainer1.Panel2.Controls.Add(textBox1);
+            splitContainer1.Panel2.Controls.Add(TextureViewer);
+            splitContainer1.Panel2.Controls.Add(lblPropertyName);
+            splitContainer1.Panel2.Controls.Add(checkBox1);
+            splitContainer1.Size = new Size(566, 451);
+            splitContainer1.SplitterDistance = 191;
             splitContainer1.TabIndex = 0;
+            // 
+            // lstParams
+            // 
+            lstParams.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            lstParams.BackColor = Color.FromArgb(35, 35, 35);
+            lstParams.BorderStyle = BorderStyle.FixedSingle;
+            lstParams.ForeColor = Color.White;
+            lstParams.FormattingEnabled = true;
+            lstParams.ItemHeight = 15;
+            lstParams.Items.AddRange(new object[] { "Test1", "2883245952", "Test2" });
+            lstParams.Location = new Point(3, 29);
+            lstParams.Name = "lstParams";
+            lstParams.Size = new Size(185, 422);
+            lstParams.TabIndex = 2;
             // 
             // lblParams
             // 
             lblParams.AutoSize = true;
-            lblParams.Font = new Font("Ubuntu", 16F, FontStyle.Regular, GraphicsUnit.Point);
+            lblParams.Font = new Font("Microsoft Sans Serif", 16F, FontStyle.Regular, GraphicsUnit.Point);
             lblParams.Location = new Point(0, 0);
             lblParams.Name = "lblParams";
-            lblParams.Size = new Size(155, 33);
+            lblParams.Size = new Size(125, 26);
             lblParams.TabIndex = 1;
             lblParams.Text = "Parameters";
             // 
-            // listView1
+            // label
             // 
-            listView1.BackColor = Color.FromArgb(35, 35, 35);
-            listView1.ForeColor = Color.White;
-            listView1.Location = new Point(3, 36);
-            listView1.Name = "listView1";
-            listView1.Size = new Size(265, 617);
-            listView1.TabIndex = 0;
-            listView1.UseCompatibleStateImageBehavior = false;
+            label.AutoSize = true;
+            label.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            label.Location = new Point(6, 62);
+            label.Name = "label";
+            label.Size = new Size(51, 21);
+            label.TabIndex = 4;
+            label.Text = "Value:";
+            // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(63, 60);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(300, 23);
+            textBox1.TabIndex = 3;
+            // 
+            // TextureViewer
+            // 
+            TextureViewer.BackColor = Color.FromArgb(25, 25, 25);
+            TextureViewer.Image = (Image)resources.GetObject("TextureViewer.Image");
+            TextureViewer.InitialImage = null;
+            TextureViewer.Location = new Point(3, 88);
+            TextureViewer.Name = "TextureViewer";
+            TextureViewer.Size = new Size(360, 360);
+            TextureViewer.SizeMode = PictureBoxSizeMode.StretchImage;
+            TextureViewer.TabIndex = 2;
+            TextureViewer.TabStop = false;
+            // 
+            // lblPropertyName
+            // 
+            lblPropertyName.AutoSize = true;
+            lblPropertyName.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point);
+            lblPropertyName.Location = new Point(3, 1);
+            lblPropertyName.Name = "lblPropertyName";
+            lblPropertyName.Size = new Size(112, 25);
+            lblPropertyName.TabIndex = 1;
+            lblPropertyName.Text = "2883245952";
+            // 
+            // checkBox1
+            // 
+            checkBox1.AutoSize = true;
+            checkBox1.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            checkBox1.Location = new Point(3, 29);
+            checkBox1.Name = "checkBox1";
+            checkBox1.Size = new Size(86, 25);
+            checkBox1.TabIndex = 0;
+            checkBox1.Text = "Exposed";
+            checkBox1.UseVisualStyleBackColor = true;
+            // 
+            // panel1
+            // 
+            panel1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            panel1.Location = new Point(12, 12);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(563, 31);
+            panel1.TabIndex = 1;
             // 
             // EditorWindow
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(40, 40, 40);
-            ClientSize = new Size(1000, 680);
+            ClientSize = new Size(587, 510);
             Controls.Add(panel1);
+            Controls.Add(splitContainer1);
             ForeColor = Color.Transparent;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
+            Margin = new Padding(3, 2, 3, 2);
             Name = "EditorWindow";
             Text = "Editor";
             FormClosing += ConfirmClose;
-            panel1.ResumeLayout(false);
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel1.PerformLayout();
+            splitContainer1.Panel2.ResumeLayout(false);
+            splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)TextureViewer).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
-        private Panel panel1;
         private SplitContainer splitContainer1;
         private Label lblParams;
-        private ListView listView1;
+        private CheckBox checkBox1;
+        private Panel panel1;
+        private Label lblPropertyName;
+        private PictureBox TextureViewer;
+        private ListBox lstParams;
+        private Label label;
+        private TextBox textBox1;
     }
 }
